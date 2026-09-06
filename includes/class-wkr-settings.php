@@ -72,6 +72,16 @@ class WKR_Settings {
 
 		register_setting(
 			'wkr_settings',
+			'wkr_auto_purge',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_bool' ),
+				'default'           => 1,
+			)
+		);
+
+		register_setting(
+			'wkr_settings',
 			'wkr_always_exclude_products',
 			array(
 				'type'              => 'array',
@@ -166,11 +176,62 @@ class WKR_Settings {
 	}
 
 	/**
+	 * Millised tuntud vahemälupluginad on aktiivsed.
+	 *
+	 * @return string[]
+	 */
+	public static function detected_caches() {
+		$found = array();
+
+		if ( class_exists( '\FlyingPress\Purge' ) ) {
+			$found[] = 'FlyingPress';
+		}
+		if ( function_exists( 'rocket_clean_domain' ) ) {
+			$found[] = 'WP Rocket';
+		}
+		if ( has_action( 'litespeed_purge_all' ) ) {
+			$found[] = 'LiteSpeed Cache';
+		}
+		if ( function_exists( 'w3tc_flush_posts' ) ) {
+			$found[] = 'W3 Total Cache';
+		}
+		if ( function_exists( 'wp_cache_clear_cache' ) ) {
+			$found[] = 'WP Super Cache';
+		}
+		if ( function_exists( 'wpfc_clear_all_cache' ) ) {
+			$found[] = 'WP Fastest Cache';
+		}
+		if ( has_action( 'cache_enabler_clear_complete_cache' ) ) {
+			$found[] = 'Cache Enabler';
+		}
+		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+			$found[] = 'SiteGround Optimizer';
+		}
+
+		return $found;
+	}
+
+	/**
 	 * Seadete leht.
 	 */
 	public static function page() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- ainult teate näitamine.
+		if ( isset( $_GET['wkr_purged'] ) ) {
+			$purged = sanitize_text_field( wp_unslash( $_GET['wkr_purged'] ) );
+			printf(
+				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+				$purged
+					? sprintf(
+						/* translators: %s: list of cache plugin names */
+						esc_html__( 'Vahemälu tühjendatud: %s', 'wonom-kampaaniariba' ),
+						esc_html( $purged )
+					)
+					: esc_html__( 'Tuntud vahemälupluginaid ei leitud, seega ei olnud midagi tühjendada.', 'wonom-kampaaniariba' )
+			);
 		}
 		?>
 		<div class="wrap wkr-wrap">
@@ -211,6 +272,42 @@ class WKR_Settings {
 							<p class="description">
 								<?php esc_html_e( 'Vabatahtlik. Kui võti on olemas, kasutab nupp „Tõlgi eesti keelest” DeepL-i. Ilma võtmeta täidetakse väljad sisseehitatud sõnastikuga, mis on ainult mustand ja vajab alati ülelugemist.', 'wonom-kampaaniariba' ); ?>
 							</p>
+						</td>
+					</tr>
+				</table>
+
+				<h2><?php esc_html_e( 'Vahemälu', 'wonom-kampaaniariba' ); ?></h2>
+				<p class="description" style="max-width:640px">
+					<?php esc_html_e( 'Riba kirjutatakse lehe HTML-i sisse, seega vahemällu salvestatud leht hoiab riba sellisena, nagu see salvestamise hetkel oli. Plugin tühjendab vahemälu kampaania salvestamisel ning paneb ajastatud tühjenduse kampaania algus- ja lõpuajale.', 'wonom-kampaaniariba' ); ?>
+				</p>
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Automaatne tühjendamine', 'wonom-kampaaniariba' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="wkr_auto_purge" value="1" <?php checked( (int) get_option( 'wkr_auto_purge', 1 ), 1 ); ?>>
+								<?php esc_html_e( 'Tühjenda vahemälu kampaania muutmisel ja kampaania piiridel', 'wonom-kampaaniariba' ); ?>
+							</label>
+							<p class="description">
+								<?php
+								$caches = self::detected_caches();
+								if ( $caches ) {
+									printf(
+										/* translators: %s: list of cache plugin names */
+										esc_html__( 'Leitud vahemälupluginad: %s.', 'wonom-kampaaniariba' ),
+										'<strong>' . esc_html( implode( ', ', $caches ) ) . '</strong>'
+									);
+								} else {
+									esc_html_e( 'Ühtegi tuntud vahemälupluginat ei leitud. Kui poel on serveri- või Cloudflare’i tasemel vahemälu, ühenda see filtriga wkr_purge_cache.', 'wonom-kampaaniariba' );
+								}
+								?>
+							</p>
+							<?php if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) : ?>
+								<p class="wkr-warn" style="max-width:640px">
+									<?php esc_html_e( 'WP-Cron on selles poes välja lülitatud (DISABLE_WP_CRON). Salvestamisel tühjendamine töötab, aga kampaania algus- ja lõpuaja tühjendus jääb tegemata, kui serveris ei ole päris cron-tööd, mis wp-cron.php käivitab.', 'wonom-kampaaniariba' ); ?>
+								</p>
+							<?php endif; ?>
 						</td>
 					</tr>
 				</table>
@@ -389,11 +486,18 @@ class WKR_Settings {
 				<?php submit_button(); ?>
 			</form>
 
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="wkr_check_update">
-				<?php wp_nonce_field( 'wkr_check_update' ); ?>
-				<?php submit_button( __( 'Kontrolli uuendusi kohe', 'wonom-kampaaniariba' ), 'secondary', 'submit', false ); ?>
-			</form>
+			<p class="wkr-actions">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
+					<input type="hidden" name="action" value="wkr_check_update">
+					<?php wp_nonce_field( 'wkr_check_update' ); ?>
+					<?php submit_button( __( 'Kontrolli uuendusi kohe', 'wonom-kampaaniariba' ), 'secondary', 'submit', false ); ?>
+				</form>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
+					<input type="hidden" name="action" value="wkr_purge">
+					<?php wp_nonce_field( 'wkr_purge' ); ?>
+					<?php submit_button( __( 'Tühjenda vahemälu kohe', 'wonom-kampaaniariba' ), 'secondary', 'submit', false ); ?>
+				</form>
+			</p>
 
 			<h2><?php esc_html_e( 'Kuidas riba lehele saab', 'wonom-kampaaniariba' ); ?></h2>
 			<p>

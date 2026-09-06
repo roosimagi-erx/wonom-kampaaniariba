@@ -846,5 +846,10 @@ class WKR_Meta {
 		if ( in_array( $result['status'], array( 'conflict', 'error' ), true ) ) {
 			WKR_Coupon::remember_notice( $result['status'], $result['message'] );
 		}
+
+		// Vahemällu salvestatud lehed hoiavad riba sellisena, nagu see oli.
+		// Tühjendame kohe ja paneme ajastatud tühjenduse kampaania piiridele.
+		WKR_Cache::schedule( $post_id );
+		WKR_Cache::auto_purge();
 	}
 }

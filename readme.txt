@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,35 @@ Kampaania prügikasti viimisel läheb hallatav kupong mustandiks; taastamisel
 avaldatakse uuesti. Plugina eemaldamisel kuponge ei kustutata, sest need on seotud
 juba tehtud tellimustega.
 
+= Vahemälu =
+
+Riba kirjutatakse lehe HTML-i sisse. See hoiab lehe kiirena, aga tähendab, et
+vahemällu salvestatud leht hoiab riba sellisena, nagu see salvestamise hetkel
+oli. Plugin tühjendab lehtede vahemälu ise:
+
+* kampaania salvestamisel, prügikasti viimisel ja taastamisel
+* kampaania algus- ja lõpuajal, ajastatud WP-Cron sündmusega
+* plugina enda uuendamisel, sest markup või stiilid võivad olla muutunud
+
+Tuntud pluginad: FlyingPress, WP Rocket, LiteSpeed Cache, W3 Total Cache,
+WP Super Cache, WP Fastest Cache, Cache Enabler, SiteGround Optimizer. Seadete
+lehel on kirjas, millised neist poes leiti, ja nupp „Tühjenda vahemälu kohe".
+
+Serveri- või Cloudflare'i tasemel vahemälu saab ühendada filtriga:
+
+`add_action( 'wkr_purge_cache', function ( $done ) {
+    // oma vahemälu tühjendamine
+} );`
+
+Algus- ja lõpuaja tühjendus sõltub WP-Cronist, mis WordPressis käivitub
+lehekülastuste pealt. Tugevalt vahemälustatud poes ei pruugi külastus PHP-ni
+jõuda, seetõttu tasub seadistada serveris päris cron-töö, mis käivitab
+wp-cron.php iga paari minuti tagant. Seadete leht hoiatab, kui WP-Cron on
+konstandiga DISABLE_WP_CRON välja lülitatud.
+
+Staatiliste failide pärast muretsema ei pea: CSS-i ja JS-i aadressis on plugina
+versiooninumber, seega uuendus toob brauserisse uued failid ise.
+
 == Installation ==
 
 1. Laadi ZIP üles: Pluginad - Lisa uus - Laadi plugin üles.
@@ -186,6 +215,11 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.9.0 =
+* Vahemälu tühjendatakse automaatselt: kampaania salvestamisel, kampaania algus- ja lõpuajal ning plugina uuendamisel.
+* Seadete lehel on näha leitud vahemälupluginad ja nupp „Tühjenda vahemälu kohe".
+* Filter wkr_purge_cache serveri- või Cloudflare'i tasemel vahemälu jaoks.
 
 = 1.8.0 =
 * Uuenduse saab teha otse seadete lehelt — nupp „Uuenda kohe versioonile X" olekurea kõrval.

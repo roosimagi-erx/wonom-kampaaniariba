@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Wonom Kampaaniariba
  * Description:       Ajastatud sooduspakkumiste riba poe päisesse ja jalusesse. Kampaaniad kalendris, tekstid kahes keeles, sooduskood ühe klõpsuga kopeeritav, WooCommerce'i kupong luuakse samast kohast.
- * Version:           1.8.0
+ * Version:           1.9.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Wonom Digital
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WKR_VERSION', '1.8.0' );
+define( 'WKR_VERSION', '1.9.0' );
 define( 'WKR_FILE', __FILE__ );
 define( 'WKR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WKR_URL', plugin_dir_url( __FILE__ ) );
@@ -27,6 +27,7 @@ define( 'WKR_CPT', 'wonom_banner' );
 
 require_once WKR_DIR . 'includes/helpers.php';
 require_once WKR_DIR . 'includes/class-wkr-post-type.php';
+require_once WKR_DIR . 'includes/class-wkr-cache.php';
 require_once WKR_DIR . 'includes/class-wkr-coupon.php';
 require_once WKR_DIR . 'includes/class-wkr-meta.php';
 require_once WKR_DIR . 'includes/class-wkr-translate.php';
@@ -41,6 +42,7 @@ add_action(
 		load_plugin_textdomain( 'wonom-kampaaniariba', false, dirname( plugin_basename( WKR_FILE ) ) . '/languages' );
 
 		WKR_Post_Type::init();
+		WKR_Cache::init();
 		WKR_Coupon::init();
 		WKR_Meta::init();
 		WKR_Translate::init();
