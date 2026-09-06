@@ -25,20 +25,17 @@
 	bottom: 12px;
 }
 
-/* position: relative on siin ankur sulgemisnupule — teema ei tohi seda ära võtta */
+/* position: relative on siin ankur sulgemisnupule — teema ei tohi seda ära võtta.
+   NB: display'd siin ei määrata. Täisriba ja kokkukäinud riba nähtavus otsustatakse
+   allpool ühel ja samal spetsiifilisuse tasemel, muidu jäävad mõlemad korraga ekraanile. */
 .wkr-slot .wkr-banner,
 .wkr-slot .wkr-mini {
 	position: relative !important;
-	display: block;
 	width: 100%;
 	box-sizing: border-box;
 	text-align: center;
 	background: var(--wkr-bg, #6a5c53);
 	color: var(--wkr-fg, #f4efe9);
-}
-
-.wkr-banner {
-	padding: 10px 38px;
 }
 
 .wkr-slot--floating .wkr-banner,
@@ -47,12 +44,19 @@
 	box-shadow: 0 6px 22px -6px rgba(0, 0, 0, 0.45);
 }
 
-.wkr-mini {
+/* Vaikeolek: näha on täisriba. */
+.wkr-slot .wkr-banner {
+	display: block;
+	padding: 10px 38px;
+}
+
+.wkr-slot .wkr-mini {
 	display: none;
 	padding: 4px 38px;
 	font-size: 0.9em;
 }
 
+/* Külastaja sulges riba: näha jääb ainult kokkukäinud riba koodiga. */
 .wkr-slot.is-collapsed .wkr-banner {
 	display: none;
 }
