@@ -125,6 +125,81 @@
 		Array.prototype.forEach.call( slot.querySelectorAll( '.wkr-coupon' ), bindCoupon );
 	}
 
+	/**
+	 * Mõõdab teema enda kleepuva alumise riba kõrguse.
+	 *
+	 * Otsime lehe ülaosast elemente, mis on position:fixed, ulatuvad ekraani
+	 * alaservani, on lai ja madal. Nii tabame WoodMarti mobiilimenüü ja muud
+	 * sarnased tööriistaribad, aga jätame vahele vestlusmullid (liiga kitsad)
+	 * ja küpsiseteated või modaalid (liiga kõrged).
+	 */
+	function themeBottomBar() {
+		var vh = window.innerHeight;
+		var vw = window.innerWidth;
+		var tallest = 0;
+		var nodes;
+
+		try {
+			nodes = document.querySelectorAll( 'body > *, body > * > *, body > * > * > *' );
+		} catch ( e ) {
+			return 0;
+		}
+
+		for ( var i = 0; i < nodes.length; i++ ) {
+			var el = nodes[ i ];
+
+			if ( el.className && String( el.className ).indexOf( 'wkr-' ) === 0 ) {
+				continue;
+			}
+			if ( el.closest && el.closest( '.wkr-slot' ) ) {
+				continue;
+			}
+
+			var cs = window.getComputedStyle( el );
+			if ( cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden' ) {
+				continue;
+			}
+			if ( parseFloat( cs.opacity ) < 0.05 ) {
+				continue;
+			}
+
+			var r = el.getBoundingClientRect();
+
+			// Peab olema ekraani alaservas kinni, lai ja madal.
+			if ( Math.abs( r.bottom - vh ) > 2 ) { continue; }
+			if ( r.height < 8 || r.height > 120 ) { continue; }
+			if ( r.width < vw * 0.6 ) { continue; }
+
+			if ( r.height > tallest ) {
+				tallest = r.height;
+			}
+		}
+
+		return Math.round( tallest );
+	}
+
+	/** Seab kleepuvale ribale nihke, et see ei jääks teema menüü taha. */
+	function applyBottomInset() {
+		var slots = document.querySelectorAll( '.wkr-slot--stuck, .wkr-slot--floating' );
+		if ( ! slots.length ) {
+			return;
+		}
+
+		var auto = 0;
+		for ( var i = 0; i < slots.length; i++ ) {
+			if ( slots[ i ].getAttribute( 'data-wkr-avoid' ) === '1' ) {
+				auto = themeBottomBar();
+				break;
+			}
+		}
+
+		Array.prototype.forEach.call( slots, function ( slot ) {
+			var manual = parseInt( slot.getAttribute( 'data-wkr-offset' ), 10 ) || 0;
+			var use = slot.getAttribute( 'data-wkr-avoid' ) === '1' ? auto + manual : manual;
+			slot.style.setProperty( '--wkr-bottom', use + 'px' );
+		} );
+	}
+
 	/** Kleepuv riba ei tohi katta jaluse linke. */
 	function pad_body() {
 		if ( ! CFG.pad ) {
@@ -181,11 +256,32 @@
 		setInterval( paint, 1000 );
 	}
 
+	function refresh() {
+		applyBottomInset();
+		pad_body();
+	}
+
 	function start() {
 		Array.prototype.forEach.call( document.querySelectorAll( '.wkr-slot' ), bindSlot );
 		ticker();
-		pad_body();
-		window.addEventListener( 'resize', pad_body );
+		refresh();
+
+		// Teema kleepuv menüü võib ilmuda alles pärast tema enda skripti tööd.
+		setTimeout( refresh, 400 );
+		setTimeout( refresh, 1500 );
+
+		var timer = null;
+		window.addEventListener( 'resize', function () {
+			clearTimeout( timer );
+			timer = setTimeout( refresh, 150 );
+		} );
+
+		if ( window.matchMedia ) {
+			var mq = window.matchMedia( '(orientation: portrait)' );
+			if ( mq.addEventListener ) {
+				mq.addEventListener( 'change', refresh );
+			}
+		}
 	}
 
 	if ( document.readyState === 'loading' ) {

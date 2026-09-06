@@ -201,6 +201,11 @@ class WKR_Render {
 			max( 0, (int) wkr_get( $post->ID, 'close_offset' ) )
 		);
 
+		// Kleepuva riba nihe alaservast. JS võib seda suurendada, kui teemal on
+		// oma kleepuv alumine menüü.
+		$bottom_offset = max( 0, (int) wkr_get( $post->ID, 'bottom_offset' ) );
+		$inline_style .= ';--wkr-bottom:' . $bottom_offset . 'px';
+
 		$link = wkr_text( $post->ID, 'link' );
 		if ( $link && $coupon && wkr_get( $post->ID, 'apply_coupon' ) ) {
 			$link = add_query_arg( 'wkr_coupon', rawurlencode( $coupon ), $link );
@@ -211,7 +216,9 @@ class WKR_Render {
 		<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
 			style="<?php echo esc_attr( $inline_style ); ?>"
 			data-wkr-id="<?php echo esc_attr( $id ); ?>"
-			data-wkr-place="<?php echo esc_attr( $place ); ?>">
+			data-wkr-place="<?php echo esc_attr( $place ); ?>"
+			data-wkr-avoid="<?php echo (int) wkr_get( $post->ID, 'avoid_bottom' ); ?>"
+			data-wkr-offset="<?php echo esc_attr( $bottom_offset ); ?>">
 
 			<div class="wkr-banner">
 				<?php if ( $link ) : ?>

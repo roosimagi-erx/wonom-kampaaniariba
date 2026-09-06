@@ -435,6 +435,23 @@ class WKR_Meta {
 
 		<div class="wkr-grid wkr-grid--2">
 			<p class="wkr-field">
+				<label><?php esc_html_e( 'Kleepuv riba ja teema alumine menüü', 'wonom-kampaaniariba' ); ?></label>
+				<label class="wkr-check">
+					<input type="checkbox" name="wkr[avoid_bottom]" value="1" <?php checked( wkr_get( $post->ID, 'avoid_bottom' ), 1 ); ?>>
+					<?php esc_html_e( 'Tõsta riba teema kleepuva alumise menüü kohale', 'wonom-kampaaniariba' ); ?>
+				</label>
+				<span class="wkr-hint"><?php esc_html_e( 'Mõõdab mobiilis automaatselt teema alumise tööriistariba ja tõstab riba selle võrra kõrgemale. Vestlusmulle ja küpsiseteateid ei arvestata.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+			<p class="wkr-field">
+				<label for="wkr_bottom_offset"><?php esc_html_e( 'Lisanihe alaservast (px)', 'wonom-kampaaniariba' ); ?></label>
+				<input type="number" id="wkr_bottom_offset" name="wkr[bottom_offset]" min="0" max="400" step="1"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'bottom_offset' ) ); ?>">
+				<span class="wkr-hint"><?php esc_html_e( 'Liidetakse automaatsele mõõtmisele. Kasuta siis, kui riba jääb ikka millegi taha.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+		</div>
+
+		<div class="wkr-grid wkr-grid--2">
+			<p class="wkr-field">
 				<label for="wkr_close_pos"><?php esc_html_e( 'Sulgemisnupu asukoht', 'wonom-kampaaniariba' ); ?></label>
 				<select id="wkr_close_pos" name="wkr[close_pos]" data-wkr="close_pos">
 					<option value="right" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'right' ); ?>><?php esc_html_e( 'Paremas servas', 'wonom-kampaaniariba' ); ?></option>

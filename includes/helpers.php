@@ -152,6 +152,14 @@ function wkr_meta_schema() {
 			'type'    => 'int',
 			'default' => 8,
 		),
+		'avoid_bottom' => array(
+			'type'    => 'bool',
+			'default' => 1,
+		),
+		'bottom_offset' => array(
+			'type'    => 'int',
+			'default' => 0,
+		),
 		'countdown'    => array(
 			'type'    => 'bool',
 			'default' => 0,

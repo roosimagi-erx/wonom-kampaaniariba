@@ -11,18 +11,20 @@
 	line-height: 1.45;
 }
 
+/* --wkr-bottom on nihe alaservast. PHP paneb sinna käsitsi määratud väärtuse,
+   JS suurendab seda teema kleepuva alumise menüü võrra. */
 .wkr-slot--stuck,
 .wkr-slot--floating {
 	position: fixed;
 	left: 0;
 	right: 0;
-	bottom: 0;
+	bottom: var(--wkr-bottom, 0px);
 }
 
 .wkr-slot--floating {
 	left: 12px;
 	right: 12px;
-	bottom: 12px;
+	bottom: calc(var(--wkr-bottom, 0px) + 12px);
 }
 
 /* position: relative on siin ankur sulgemisnupule — teema ei tohi seda ära võtta.
