@@ -82,6 +82,26 @@ class WKR_Settings {
 
 		register_setting(
 			'wkr_settings',
+			'wkr_cf_zone',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => '',
+			)
+		);
+
+		register_setting(
+			'wkr_settings',
+			'wkr_cf_token',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => '',
+			)
+		);
+
+		register_setting(
+			'wkr_settings',
 			'wkr_always_exclude_products',
 			array(
 				'type'              => 'array',
@@ -233,6 +253,14 @@ class WKR_Settings {
 					: esc_html__( 'Tuntud vahemälupluginaid ei leitud, seega ei olnud midagi tühjendada.', 'wonom-kampaaniariba' )
 			);
 		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- ainult teate näitamine.
+		if ( ! empty( $_GET['wkr_purge_err'] ) ) {
+			printf(
+				'<div class="notice notice-error is-dismissible"><p>%s</p></div>',
+				esc_html( sanitize_text_field( wp_unslash( $_GET['wkr_purge_err'] ) ) )
+			);
+		}
 		?>
 		<div class="wrap wkr-wrap">
 			<h1><?php esc_html_e( 'Kampaaniariba seaded', 'wonom-kampaaniariba' ); ?></h1>
@@ -303,11 +331,40 @@ class WKR_Settings {
 								}
 								?>
 							</p>
+							<?php if ( ! empty( $_SERVER['HTTP_CF_RAY'] ) || get_option( 'wkr_cf_zone' ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- ainult olemasolu kontroll. ?>
+								<p class="description">
+									<?php esc_html_e( 'Cloudflare on selle poe ees. Kui Cloudflare hoiab ka HTML-i (Cache Everything või APO), tuleb ka tema vahemälu tühjendada — täida allolevad väljad.', 'wonom-kampaaniariba' ); ?>
+								</p>
+							<?php endif; ?>
 							<?php if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) : ?>
 								<p class="wkr-warn" style="max-width:640px">
 									<?php esc_html_e( 'WP-Cron on selles poes välja lülitatud (DISABLE_WP_CRON). Salvestamisel tühjendamine töötab, aga kampaania algus- ja lõpuaja tühjendus jääb tegemata, kui serveris ei ole päris cron-tööd, mis wp-cron.php käivitab.', 'wonom-kampaaniariba' ); ?>
 								</p>
 							<?php endif; ?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="wkr_cf_zone"><?php esc_html_e( 'Cloudflare Zone ID', 'wonom-kampaaniariba' ); ?></label>
+						</th>
+						<td>
+							<input type="text" id="wkr_cf_zone" name="wkr_cf_zone" class="regular-text"
+								value="<?php echo esc_attr( get_option( 'wkr_cf_zone', '' ) ); ?>" autocomplete="off">
+							<p class="description">
+								<?php esc_html_e( 'Cloudflare’i töölaual domeeni Overview lehe paremas servas, jaotises API.', 'wonom-kampaaniariba' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="wkr_cf_token"><?php esc_html_e( 'Cloudflare API token', 'wonom-kampaaniariba' ); ?></label>
+						</th>
+						<td>
+							<input type="password" id="wkr_cf_token" name="wkr_cf_token" class="regular-text"
+								value="<?php echo esc_attr( get_option( 'wkr_cf_token', '' ) ); ?>" autocomplete="off">
+							<p class="description">
+								<?php esc_html_e( 'Loo Cloudflare’is My Profile → API Tokens → Create Token. Õigus: Zone → Cache Purge → Purge. Piira token ainult selle domeeni tsooniga. Globaalset API võtit siia ei tohi panna.', 'wonom-kampaaniariba' ); ?>
+							</p>
 						</td>
 					</tr>
 				</table>

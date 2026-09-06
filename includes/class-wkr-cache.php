@@ -49,13 +49,46 @@ class WKR_Cache {
 	}
 
 	/**
-	 * Tühjendab lehtede vahemälu kõigis tuntud pluginates.
+	 * Kas selles päringus on juba tühjendatud.
+	 *
+	 * @var bool
+	 */
+	private static $purged = false;
+
+	/**
+	 * Viimase tühjenduse vead.
+	 *
+	 * @var string[]
+	 */
+	private static $errors = array();
+
+	/**
+	 * Viimase tühjenduse vead.
+	 *
+	 * @return string[]
+	 */
+	public static function last_errors() {
+		return self::$errors;
+	}
+
+	/**
+	 * Tühjendab lehtede vahemälu kõigis tuntud pluginates ja Cloudflare'is.
 	 *
 	 * Iga kutse on olemasolu kontrolli taga, nii et puuduv plugin ei tee midagi.
+	 * Ühe päringu jooksul tühjendatakse ainult korra — mitu haaki võivad korraga
+	 * käivituda ja Cloudflare'i API-l on päevalimiit.
 	 *
+	 * @param bool $force Tühjenda ka siis, kui selles päringus on juba tühjendatud.
 	 * @return string[] Nimed, mille vahemälu tühjendati.
 	 */
-	public static function purge() {
+	public static function purge( $force = false ) {
+		if ( self::$purged && ! $force ) {
+			return array();
+		}
+
+		self::$purged = true;
+		self::$errors = array();
+
 		$done = array();
 
 		// FlyingPress — purge_pages jätab fondid ja pildid alles.
@@ -108,6 +141,11 @@ class WKR_Cache {
 			wp_cache_flush();
 		}
 
+		// Cloudflare hoiab lehe koopiat servas. Serveripoolne tühjendus sinna ei ulatu.
+		if ( self::cloudflare() ) {
+			$done[] = 'Cloudflare';
+		}
+
 		/**
 		 * Oma vahemälu tühjendamiseks, näiteks Cloudflare või serveri tasemel.
 		 *
@@ -116,6 +154,55 @@ class WKR_Cache {
 		do_action( 'wkr_purge_cache', $done );
 
 		return $done;
+	}
+
+	/**
+	 * Tühjendab Cloudflare'i serva vahemälu.
+	 *
+	 * Cloudflare'i tasuta ja Pro pakett lubab ainult kogu tsooni tühjendamist.
+	 * Riba on igal lehel, seega see on siin niikuinii õige valik.
+	 *
+	 * @return bool Kas tühjendamine õnnestus.
+	 */
+	private static function cloudflare() {
+		$zone  = trim( (string) get_option( 'wkr_cf_zone', '' ) );
+		$token = trim( (string) get_option( 'wkr_cf_token', '' ) );
+
+		if ( '' === $zone || '' === $token ) {
+			return false;
+		}
+
+		$response = wp_remote_post(
+			'https://api.cloudflare.com/client/v4/zones/' . rawurlencode( $zone ) . '/purge_cache',
+			array(
+				'timeout' => 20,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $token,
+					'Content-Type'  => 'application/json',
+				),
+				'body'    => wp_json_encode( array( 'purge_everything' => true ) ),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			self::$errors[] = 'Cloudflare: ' . $response->get_error_message();
+			return false;
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( ! empty( $body['success'] ) ) {
+			return true;
+		}
+
+		$message = __( 'tundmatu viga', 'wonom-kampaaniariba' );
+		if ( ! empty( $body['errors'][0]['message'] ) ) {
+			$message = $body['errors'][0]['message'];
+		}
+
+		self::$errors[] = 'Cloudflare: ' . $message;
+
+		return false;
 	}
 
 	/**
@@ -220,18 +307,19 @@ class WKR_Cache {
 
 		check_admin_referer( 'wkr_purge' );
 
-		$done = self::purge();
+		$done = self::purge( true );
 
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'post_type'  => WKR_CPT,
-					'page'       => 'wkr-settings',
-					'wkr_purged' => rawurlencode( implode( ', ', $done ) ),
-				),
-				admin_url( 'edit.php' )
-			)
+		$args = array(
+			'post_type'  => WKR_CPT,
+			'page'       => 'wkr-settings',
+			'wkr_purged' => rawurlencode( implode( ', ', $done ) ),
 		);
+
+		if ( self::$errors ) {
+			$args['wkr_purge_err'] = rawurlencode( implode( ' · ', self::$errors ) );
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'edit.php' ) ) );
 		exit;
 	}
 }

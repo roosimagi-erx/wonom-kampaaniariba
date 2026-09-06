@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.9.0
+Stable tag: 1.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -117,7 +117,24 @@ Tuntud pluginad: FlyingPress, WP Rocket, LiteSpeed Cache, W3 Total Cache,
 WP Super Cache, WP Fastest Cache, Cache Enabler, SiteGround Optimizer. Seadete
 lehel on kirjas, millised neist poes leiti, ja nupp „Tühjenda vahemälu kohe".
 
-Serveri- või Cloudflare'i tasemel vahemälu saab ühendada filtriga:
+= Cloudflare =
+
+Cloudflare vaikimisi HTML-i ei vahemälusta, ainult staatilisi faile. Kui aga
+poel on Cache Everything reegel või APO, hoiab Cloudflare ka lehe koopiat servas
+ja serveripoolne tühjendus sinna ei ulatu.
+
+Kontrolli oma poe päistest: `cf-cache-status: DYNAMIC` tähendab, et HTML-i ei
+vahemälustata ja midagi teha ei ole vaja. `HIT` või `MISS` tähendab, et
+vahemälustatakse.
+
+Seadetes on väljad Zone ID ja API token. Token tee Cloudflare'is
+My Profile - API Tokens - Create Token, õigusega Zone - Cache Purge - Purge, ja
+piira see ainult selle domeeni tsooniga. Globaalset API võtit siia panna ei tohi.
+
+Tasuta ja Pro paketis saab tühjendada ainult kogu tsooni korraga. Riba on igal
+lehel, seega see on siin niikuinii õige valik.
+
+Muu vahemälu saab ühendada filtriga:
 
 `add_action( 'wkr_purge_cache', function ( $done ) {
     // oma vahemälu tühjendamine
@@ -215,6 +232,11 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.10.0 =
+* Cloudflare'i serva vahemälu tühjendatakse koos ülejäänuga. Seadetes Zone ID ja API tokeni väljad.
+* Ühe päringu jooksul tühjendatakse ainult korra, et Cloudflare'i päevalimiiti mitte kulutada.
+* Manuaalne tühjendus näitab ka vead, kui Cloudflare vastas tõrkega.
 
 = 1.9.0 =
 * Vahemälu tühjendatakse automaatselt: kampaania salvestamisel, kampaania algus- ja lõpuajal ning plugina uuendamisel.
