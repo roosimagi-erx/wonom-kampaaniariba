@@ -433,6 +433,25 @@ class WKR_Meta {
 			</p>
 		</div>
 
+		<div class="wkr-grid wkr-grid--2">
+			<p class="wkr-field">
+				<label for="wkr_close_pos"><?php esc_html_e( 'Sulgemisnupu asukoht', 'wonom-kampaaniariba' ); ?></label>
+				<select id="wkr_close_pos" name="wkr[close_pos]" data-wkr="close_pos">
+					<option value="right" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'right' ); ?>><?php esc_html_e( 'Paremas servas', 'wonom-kampaaniariba' ); ?></option>
+					<option value="left" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'left' ); ?>><?php esc_html_e( 'Vasakus servas', 'wonom-kampaaniariba' ); ?></option>
+					<option value="top-right" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'top-right' ); ?>><?php esc_html_e( 'Paremas ülanurgas', 'wonom-kampaaniariba' ); ?></option>
+					<option value="top-left" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'top-left' ); ?>><?php esc_html_e( 'Vasakus ülanurgas', 'wonom-kampaaniariba' ); ?></option>
+				</select>
+				<span class="wkr-hint"><?php esc_html_e( 'Teemade „keri üles” nupp ja vestlusmull istuvad tavaliselt paremas alanurgas. Kui nupp jääb nende taha, too see vasakusse serva või ülanurka.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+			<p class="wkr-field">
+				<label for="wkr_close_offset"><?php esc_html_e( 'Nupu kaugus servast (px)', 'wonom-kampaaniariba' ); ?></label>
+				<input type="number" id="wkr_close_offset" name="wkr[close_offset]" min="0" max="300" step="1"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'close_offset' ) ); ?>" data-wkr="close_offset">
+				<span class="wkr-hint"><?php esc_html_e( 'Suurenda, et nupp läheks „keri üles” nupust mööda. Näiteks 70.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+		</div>
+
 		<fieldset class="wkr-toggles">
 			<legend class="screen-reader-text"><?php esc_html_e( 'Valikud', 'wonom-kampaaniariba' ); ?></legend>
 			<label class="wkr-check">

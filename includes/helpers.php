@@ -144,6 +144,14 @@ function wkr_meta_schema() {
 			'type'    => 'bool',
 			'default' => 1,
 		),
+		'close_pos'    => array(
+			'type'    => 'key',
+			'default' => 'right',
+		),
+		'close_offset' => array(
+			'type'    => 'int',
+			'default' => 8,
+		),
 		'countdown'    => array(
 			'type'    => 'bool',
 			'default' => 0,

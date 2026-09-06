@@ -175,7 +175,12 @@ class WKR_Render {
 		$closes = (int) wkr_get( $post->ID, 'dismissible' );
 		$end_ts = (int) get_post_meta( $post->ID, '_wkr_end_utc', true );
 
-		$classes = array( 'wkr-slot', 'wkr-slot--' . $place );
+		$close_pos = wkr_get( $post->ID, 'close_pos' );
+		if ( ! in_array( $close_pos, array( 'right', 'left', 'top-right', 'top-left' ), true ) ) {
+			$close_pos = 'right';
+		}
+
+		$classes = array( 'wkr-slot', 'wkr-slot--' . $place, 'wkr-slot--close-' . $close_pos );
 		if ( 'bottom' === $place && ! $inline ) {
 			$classes[] = 'floating' === $style ? 'wkr-slot--floating' : 'wkr-slot--stuck';
 		}
@@ -186,13 +191,14 @@ class WKR_Render {
 		// Paosüsteem käib ainult korra, atribuudi väljastamisel — muidu muutuks
 		// fondinime jutumärk stringiks &amp;quot; ja font ei laadiks.
 		$inline_style = sprintf(
-			'--wkr-bg:%1$s;--wkr-fg:%2$s;--wkr-hl:%3$s;--wkr-size:%4$spx;--wkr-z:%5$d;--wkr-font:%6$s',
+			'--wkr-bg:%1$s;--wkr-fg:%2$s;--wkr-hl:%3$s;--wkr-size:%4$spx;--wkr-z:%5$d;--wkr-font:%6$s;--wkr-close-offset:%7$dpx',
 			sanitize_hex_color( wkr_get( $post->ID, 'bg' ) ),
 			sanitize_hex_color( wkr_get( $post->ID, 'fg' ) ),
 			sanitize_hex_color( wkr_get( $post->ID, 'hl' ) ),
 			(float) wkr_get( $post->ID, 'size' ),
 			(int) wkr_get( $post->ID, 'zindex' ),
-			$stack
+			$stack,
+			max( 0, (int) wkr_get( $post->ID, 'close_offset' ) )
 		);
 
 		$link = wkr_text( $post->ID, 'link' );

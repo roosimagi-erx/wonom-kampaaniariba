@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.2
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -156,6 +156,15 @@ Tulemust hoitakse vahemälus kuus tundi. Nupp „Kontrolli uuendusi kohe" tühje
 vahemälu ja küsib kohe uuesti.
 
 == Changelog ==
+
+= 1.3.0 =
+* Sulgemisnupu asukoht on nüüd seadistatav: parem või vasak serv, ülanurgad, koos kaugusega servast. Vajalik siis, kui teema „keri üles" nupp või vestlusmull istub nupu peal.
+
+= 1.2.2 =
+* Parandus: kokkukäinud sooduskoodi riba oli korraga täisribaga nähtaval.
+
+= 1.2.1 =
+* Riba nupud peavad nüüd vastu teemade nupustiilidele (WoodMart jt).
 
 = 1.2.0 =
 * Automaatsed uuendused GitHubi väljalaskest või oma serveri JSON-failist.

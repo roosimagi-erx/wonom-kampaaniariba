@@ -250,12 +250,15 @@
 		var coupon = val( 'coupon' );
 		var lang = previewLang;
 
+		var closePos = val( 'close_pos' ) || 'right';
+
 		var slot = document.createElement( 'div' );
-		slot.className = 'wkr-slot';
+		slot.className = 'wkr-slot wkr-slot--close-' + closePos;
 		slot.style.cssText = '--wkr-bg:' + val( 'bg' ) +
 			';--wkr-fg:' + val( 'fg' ) +
 			';--wkr-hl:' + val( 'hl' ) +
 			';--wkr-size:' + ( val( 'size' ) || 13 ) + 'px' +
+			';--wkr-close-offset:' + ( val( 'close_offset' ) || 0 ) + 'px' +
 			';--wkr-font:' + ( fonts[ val( 'font' ) ] || 'inherit' );
 
 		var banner = document.createElement( 'div' );

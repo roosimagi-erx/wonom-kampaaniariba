@@ -189,15 +189,11 @@
 	display: none;
 }
 
-/* Sulge / ava — alati riba paremas servas, taust läbipaistev */
+/* Sulge / ava. Asukoht on seadistatav, sest teemade „keri üles” nupp ja
+   vestlusmullid istuvad tihti just riba paremas alanurgas. */
 .wkr-slot .wkr-close,
 .wkr-slot .wkr-expand {
 	position: absolute !important;
-	right: 8px !important;
-	left: auto !important;
-	top: 50% !important;
-	bottom: auto !important;
-	transform: translateY(-50%) !important;
 	z-index: 3;
 	display: block !important;
 	padding: 5px 8px !important;
@@ -209,6 +205,42 @@
 	line-height: 1 !important;
 	opacity: 0.6;
 	cursor: pointer;
+}
+
+.wkr-slot--close-right .wkr-close,
+.wkr-slot--close-right .wkr-expand {
+	right: var(--wkr-close-offset, 8px) !important;
+	left: auto !important;
+	top: 50% !important;
+	bottom: auto !important;
+	transform: translateY(-50%) !important;
+}
+
+.wkr-slot--close-left .wkr-close,
+.wkr-slot--close-left .wkr-expand {
+	left: var(--wkr-close-offset, 8px) !important;
+	right: auto !important;
+	top: 50% !important;
+	bottom: auto !important;
+	transform: translateY(-50%) !important;
+}
+
+.wkr-slot--close-top-right .wkr-close,
+.wkr-slot--close-top-right .wkr-expand {
+	right: var(--wkr-close-offset, 8px) !important;
+	left: auto !important;
+	top: 3px !important;
+	bottom: auto !important;
+	transform: none !important;
+}
+
+.wkr-slot--close-top-left .wkr-close,
+.wkr-slot--close-top-left .wkr-expand {
+	left: var(--wkr-close-offset, 8px) !important;
+	right: auto !important;
+	top: 3px !important;
+	bottom: auto !important;
+	transform: none !important;
 }
 
 .wkr-slot .wkr-expand {
