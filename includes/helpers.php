@@ -160,6 +160,14 @@ function wkr_meta_schema() {
 			'type'    => 'int',
 			'default' => 0,
 		),
+		'float_btn'    => array(
+			'type'    => 'key',
+			'default' => 'lift',
+		),
+		'float_sel'    => array(
+			'type'    => 'text',
+			'default' => '',
+		),
 		'countdown'    => array(
 			'type'    => 'bool',
 			'default' => 0,

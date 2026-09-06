@@ -452,6 +452,25 @@ class WKR_Meta {
 
 		<div class="wkr-grid wkr-grid--2">
 			<p class="wkr-field">
+				<label for="wkr_float_btn"><?php esc_html_e( 'Teema „keri üles” nupp', 'wonom-kampaaniariba' ); ?></label>
+				<select id="wkr_float_btn" name="wkr[float_btn]">
+					<option value="lift" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'lift' ); ?>><?php esc_html_e( 'Tõsta riba kohale', 'wonom-kampaaniariba' ); ?></option>
+					<option value="hide" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'hide' ); ?>><?php esc_html_e( 'Peida, kuni riba on ekraanil', 'wonom-kampaaniariba' ); ?></option>
+					<option value="behind" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'behind' ); ?>><?php esc_html_e( 'Jäta riba taha', 'wonom-kampaaniariba' ); ?></option>
+					<option value="none" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'none' ); ?>><?php esc_html_e( 'Ära puutu', 'wonom-kampaaniariba' ); ?></option>
+				</select>
+				<span class="wkr-hint"><?php esc_html_e( 'Puudutab ainult jaluse riba. Nupp saab oma koha tagasi, kui riba kaob.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+			<p class="wkr-field">
+				<label for="wkr_float_sel"><?php esc_html_e( 'Nupu CSS-valija', 'wonom-kampaaniariba' ); ?></label>
+				<input type="text" id="wkr_float_sel" name="wkr[float_sel]"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'float_sel' ) ); ?>" placeholder=".scrollToTop">
+				<span class="wkr-hint"><?php esc_html_e( 'Tühi = plugin tunneb levinumad ise ära, sealhulgas WoodMarti .scrollToTop. Täida ainult siis, kui su teema kasutab midagi muud.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+		</div>
+
+		<div class="wkr-grid wkr-grid--2">
+			<p class="wkr-field">
 				<label for="wkr_close_pos"><?php esc_html_e( 'Sulgemisnupu asukoht', 'wonom-kampaaniariba' ); ?></label>
 				<select id="wkr_close_pos" name="wkr[close_pos]" data-wkr="close_pos">
 					<option value="right" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'right' ); ?>><?php esc_html_e( 'Paremas servas', 'wonom-kampaaniariba' ); ?></option>

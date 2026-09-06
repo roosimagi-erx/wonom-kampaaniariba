@@ -102,7 +102,7 @@
 				if ( ! hasMini ) {
 					slot.style.display = 'none';
 				}
-				pad_body();
+				refresh();
 			} );
 		}
 
@@ -112,7 +112,7 @@
 				ev.stopPropagation();
 				slot.classList.remove( 'is-collapsed' );
 				remember( slot, false );
-				pad_body();
+				refresh();
 			} );
 		}
 
@@ -200,6 +200,68 @@
 		} );
 	}
 
+	/* Levinumate teemade „keri üles” nupud. WoodMartil on see .scrollToTop. */
+	var FLOAT_SELECTOR = [
+		'.scrollToTop',
+		'.wd-scroll-top',
+		'#scroll-to-top',
+		'.scroll-to-top',
+		'.back-to-top',
+		'.backtotop',
+		'#back-to-top',
+		'.et_pb_scroll_top'
+	].join( ', ' );
+
+	/**
+	 * Teema ujuv „keri üles” nupp istub tavaliselt samas nurgas, kus riba.
+	 * Kampaania seadetest saab valida, kas see tõsta riba kohale, jätta riba
+	 * taha või peita seniks, kuni riba on ekraanil.
+	 */
+	function applyFloating( slot ) {
+		var mode = slot.getAttribute( 'data-wkr-float' ) || 'none';
+		if ( 'none' === mode ) {
+			return;
+		}
+
+		var selector = ( slot.getAttribute( 'data-wkr-float-sel' ) || '' ).trim() || FLOAT_SELECTOR;
+		var nodes;
+
+		try {
+			nodes = document.querySelectorAll( selector );
+		} catch ( e ) {
+			return; // vigane valija — parem mitte midagi teha
+		}
+
+		var rect = slot.getBoundingClientRect();
+		var showing = rect.height > 0 && 'none' !== window.getComputedStyle( slot ).display;
+
+		// Vaba ruum riba ülaservast ekraani alaservani.
+		var lift = Math.round( window.innerHeight - rect.top ) + 12;
+		var ourZ = parseInt( window.getComputedStyle( slot ).zIndex, 10 ) || 90;
+
+		Array.prototype.forEach.call( nodes, function ( el ) {
+			if ( el.closest && el.closest( '.wkr-slot' ) ) {
+				return;
+			}
+
+			if ( ! showing ) {
+				// Riba on kadunud — anname teema nupu talle tagasi.
+				el.style.removeProperty( 'bottom' );
+				el.style.removeProperty( 'z-index' );
+				el.style.removeProperty( 'display' );
+				return;
+			}
+
+			if ( 'hide' === mode ) {
+				el.style.setProperty( 'display', 'none', 'important' );
+			} else if ( 'behind' === mode ) {
+				el.style.setProperty( 'z-index', String( Math.max( 0, ourZ - 1 ) ), 'important' );
+			} else if ( 'lift' === mode ) {
+				el.style.setProperty( 'bottom', lift + 'px', 'important' );
+			}
+		} );
+	}
+
 	/** Kleepuv riba ei tohi katta jaluse linke. */
 	function pad_body() {
 		if ( ! CFG.pad ) {
@@ -234,7 +296,7 @@
 					var slot = node.closest ? node.closest( '.wkr-slot' ) : null;
 					if ( slot ) {
 						slot.style.display = 'none';
-						pad_body();
+						refresh();
 					}
 					node.textContent = '';
 					return;
@@ -259,6 +321,10 @@
 	function refresh() {
 		applyBottomInset();
 		pad_body();
+		Array.prototype.forEach.call(
+			document.querySelectorAll( '.wkr-slot--stuck, .wkr-slot--floating' ),
+			applyFloating
+		);
 	}
 
 	function start() {

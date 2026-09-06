@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -167,6 +167,9 @@ Tulemust hoitakse vahemälus kuus tundi. Nupp „Kontrolli uuendusi kohe" tühje
 vahemälu ja küsib kohe uuesti.
 
 == Changelog ==
+
+= 1.6.0 =
+* Teema ujuv „keri üles" nupp ei jää enam jaluse riba ette. Valikud: tõsta riba kohale (vaikimisi), peida, jäta riba taha või ära puutu.
 
 = 1.5.0 =
 * Kampaania kloonimine: „Klooni" link nimekirjas ja avaldamiskastis. Koopia tuleb mustandina, kupongihaldus on välja lülitatud.

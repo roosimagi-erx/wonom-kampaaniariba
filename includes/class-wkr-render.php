@@ -218,7 +218,11 @@ class WKR_Render {
 			data-wkr-id="<?php echo esc_attr( $id ); ?>"
 			data-wkr-place="<?php echo esc_attr( $place ); ?>"
 			data-wkr-avoid="<?php echo (int) wkr_get( $post->ID, 'avoid_bottom' ); ?>"
-			data-wkr-offset="<?php echo esc_attr( $bottom_offset ); ?>">
+			data-wkr-offset="<?php echo esc_attr( $bottom_offset ); ?>"
+			<?php if ( 'bottom' === $place && ! $inline ) : ?>
+				data-wkr-float="<?php echo esc_attr( self::float_mode( $post->ID ) ); ?>"
+				data-wkr-float-sel="<?php echo esc_attr( wkr_get( $post->ID, 'float_sel' ) ); ?>"
+			<?php endif; ?>>
 
 			<div class="wkr-banner">
 				<?php if ( $link ) : ?>
@@ -264,6 +268,17 @@ class WKR_Render {
 		endif;
 
 		return trim( ob_get_clean() );
+	}
+
+	/**
+	 * Mida teha teema ujuva „keri üles” nupuga.
+	 *
+	 * @param int $post_id Kampaania ID.
+	 * @return string none | lift | behind | hide
+	 */
+	public static function float_mode( $post_id ) {
+		$mode = wkr_get( $post_id, 'float_btn' );
+		return in_array( $mode, array( 'none', 'lift', 'behind', 'hide' ), true ) ? $mode : 'none';
 	}
 
 	/**
