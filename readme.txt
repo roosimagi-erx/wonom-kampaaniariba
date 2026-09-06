@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.10.0
+Stable tag: 1.10.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -232,6 +232,9 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.10.1 =
+* Parandus: seadete lehe uuendusnupp jäi tiksuma ega teinud midagi. WordPressi wp.updates.updatePlugin eeldab Pluginate ekraani ja viskas mujal vea enne päringu saatmist. Nüüd kasutatakse alusfunktsiooni wp.updates.ajax ja nupp ei saa enam kinni jääda.
 
 = 1.10.0 =
 * Cloudflare'i serva vahemälu tühjendatakse koos ülejäänuga. Seadetes Zone ID ja API tokeni väljad.

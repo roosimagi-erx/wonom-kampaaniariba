@@ -391,10 +391,18 @@
 
 		var status = document.querySelector( '.wkr-update-status' );
 		var label = btn.textContent;
+		var busy = false;
 
-		// wp.updates puudub — jätame lingi tavaliseks, see viib uuendusekraanile.
-		if ( ! window.wp || ! wp.updates || 'function' !== typeof wp.updates.updatePlugin ) {
-			return;
+		/*
+		 * NB: siin ei tohi kasutada wp.updates.updatePlugin(). See eeldab, et
+		 * jookseb Pluginate või Pluginate lisamise ekraanil, ja ehitab teateväljad
+		 * ainult nendel lehtedel. Mujal jääb muutuja määramata ja funktsioon viskab
+		 * TypeError enne, kui päring üldse välja läheb — nupp jääks igavesti
+		 * tiksuma. wp.updates.ajax on sama asja alusfunktsioon ilma nende
+		 * eeldusteta.
+		 */
+		if ( ! window.wp || ! wp.updates || 'function' !== typeof wp.updates.ajax ) {
+			return; // link jääb tavaliseks ja viib uuendusekraanile
 		}
 
 		function say( text ) {
@@ -403,34 +411,58 @@
 			}
 		}
 
+		function reset() {
+			busy = false;
+			btn.classList.remove( 'updating-message' );
+			btn.removeAttribute( 'aria-disabled' );
+			btn.textContent = label;
+		}
+
+		function classicScreen() {
+			window.location.href = btn.href;
+		}
+
 		btn.addEventListener( 'click', function ( ev ) {
 			ev.preventDefault();
+
+			if ( busy ) {
+				return;
+			}
+
+			busy = true;
 			btn.classList.add( 'updating-message' );
 			btn.setAttribute( 'aria-disabled', 'true' );
 			btn.textContent = TXT.updating || 'Uuendan…';
 			say( '' );
 
-			wp.updates.updatePlugin( {
-				plugin: btn.getAttribute( 'data-plugin' ),
-				slug: btn.getAttribute( 'data-slug' )
-			} );
-		} );
+			// Kui vastust ei tule, viime kasutaja WordPressi enda uuendusekraanile.
+			// Nupp ei tohi mitte kunagi lõputult tiksuma jääda.
+			var bail = setTimeout( classicScreen, 30000 );
 
-		$( document ).on( 'wp-plugin-update-success', function () {
-			btn.classList.remove( 'updating-message' );
-			btn.classList.add( 'updated-message' );
-			btn.textContent = TXT.updated || 'Uuendatud';
-			say( TXT.reloading || '' );
-			setTimeout( function () {
-				window.location.reload();
-			}, 1200 );
-		} );
-
-		$( document ).on( 'wp-plugin-update-error', function ( event, response ) {
-			btn.classList.remove( 'updating-message' );
-			btn.removeAttribute( 'aria-disabled' );
-			btn.textContent = label;
-			say( ( response && response.errorMessage ) || TXT.updFailed || '' );
+			try {
+				wp.updates.ajax( 'update-plugin', {
+					plugin: btn.getAttribute( 'data-plugin' ),
+					slug: btn.getAttribute( 'data-slug' ),
+					success: function () {
+						clearTimeout( bail );
+						btn.classList.remove( 'updating-message' );
+						btn.classList.add( 'updated-message' );
+						btn.textContent = TXT.updated || 'Uuendatud';
+						say( TXT.reloading || '' );
+						setTimeout( function () {
+							window.location.reload();
+						}, 1200 );
+					},
+					error: function ( response ) {
+						clearTimeout( bail );
+						reset();
+						say( ( response && response.errorMessage ) || TXT.updFailed || '' );
+					}
+				} );
+			} catch ( e ) {
+				clearTimeout( bail );
+				classicScreen();
+			}
 		} );
 	}
 
