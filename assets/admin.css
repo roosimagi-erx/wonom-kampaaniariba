@@ -387,6 +387,21 @@
 	font-variant-numeric: tabular-nums;
 }
 
+/* ---------- uuendusnupp seadete lehel ---------- */
+
+.wkr-update-box {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	margin-left: 8px;
+	vertical-align: middle;
+}
+
+.wkr-update-status {
+	color: #646970;
+	font-size: 12.5px;
+}
+
 .wkr-tz {
 	color: #787c82;
 	font-size: 11px;

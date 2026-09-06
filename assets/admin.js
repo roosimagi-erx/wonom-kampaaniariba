@@ -379,6 +379,61 @@
 		}
 	}
 
+	/* ---------------- uuendamine seadete lehelt ----------------
+	   Nupp on tavaline link WordPressi uuendusekraanile. Kui wp.updates on
+	   olemas, teeme uuenduse hoopis kohapeal, lehelt lahkumata. */
+
+	function bindUpdate() {
+		var btn = document.querySelector( '.wkr-update-now' );
+		if ( ! btn ) {
+			return;
+		}
+
+		var status = document.querySelector( '.wkr-update-status' );
+		var label = btn.textContent;
+
+		// wp.updates puudub — jätame lingi tavaliseks, see viib uuendusekraanile.
+		if ( ! window.wp || ! wp.updates || 'function' !== typeof wp.updates.updatePlugin ) {
+			return;
+		}
+
+		function say( text ) {
+			if ( status ) {
+				status.textContent = text || '';
+			}
+		}
+
+		btn.addEventListener( 'click', function ( ev ) {
+			ev.preventDefault();
+			btn.classList.add( 'updating-message' );
+			btn.setAttribute( 'aria-disabled', 'true' );
+			btn.textContent = TXT.updating || 'Uuendan…';
+			say( '' );
+
+			wp.updates.updatePlugin( {
+				plugin: btn.getAttribute( 'data-plugin' ),
+				slug: btn.getAttribute( 'data-slug' )
+			} );
+		} );
+
+		$( document ).on( 'wp-plugin-update-success', function () {
+			btn.classList.remove( 'updating-message' );
+			btn.classList.add( 'updated-message' );
+			btn.textContent = TXT.updated || 'Uuendatud';
+			say( TXT.reloading || '' );
+			setTimeout( function () {
+				window.location.reload();
+			}, 1200 );
+		} );
+
+		$( document ).on( 'wp-plugin-update-error', function ( event, response ) {
+			btn.classList.remove( 'updating-message' );
+			btn.removeAttribute( 'aria-disabled' );
+			btn.textContent = label;
+			say( ( response && response.errorMessage ) || TXT.updFailed || '' );
+		} );
+	}
+
 	/* ---------------- automaatne tõlge ---------------- */
 
 	function bindTranslate() {
@@ -441,12 +496,21 @@
 	/* ---------------- käivitus ---------------- */
 
 	$( function () {
-		$( '.wkr-color' ).wpColorPicker( {
-			change: function () {
-				setTimeout( renderPreview, 30 );
-			},
-			clear: renderPreview
-		} );
+		// Seadete lehel on ainult uuendusnupp — ülejäänu kuulub kampaania vormi juurde.
+		bindUpdate();
+
+		if ( ! document.getElementById( 'wkr-preview' ) ) {
+			return;
+		}
+
+		if ( $.fn.wpColorPicker ) {
+			$( '.wkr-color' ).wpColorPicker( {
+				change: function () {
+					setTimeout( renderPreview, 30 );
+				},
+				clear: renderPreview
+			} );
+		}
 
 		Array.prototype.forEach.call( document.querySelectorAll( '.wkr-date' ), datePicker );
 

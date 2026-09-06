@@ -351,6 +351,30 @@ class WKR_Settings {
 									?>
 									<?php if ( version_compare( $remote['version'], $installed, '>' ) ) : ?>
 										<span class="wkr-pill wkr-pill--live"><?php esc_html_e( 'Uuendus saadaval', 'wonom-kampaaniariba' ); ?></span>
+										<?php
+										if ( current_user_can( 'update_plugins' ) ) :
+											$plugin_file = plugin_basename( WKR_FILE );
+											$upgrade_url = wp_nonce_url(
+												self_admin_url( 'update.php?action=upgrade-plugin&plugin=' . rawurlencode( $plugin_file ) ),
+												'upgrade-plugin_' . $plugin_file
+											);
+											?>
+											<span class="wkr-update-box">
+												<a href="<?php echo esc_url( $upgrade_url ); ?>"
+													class="button button-primary wkr-update-now"
+													data-plugin="<?php echo esc_attr( $plugin_file ); ?>"
+													data-slug="<?php echo esc_attr( WKR_Updater::slug() ); ?>">
+													<?php
+													printf(
+														/* translators: %s: version number */
+														esc_html__( 'Uuenda kohe versioonile %s', 'wonom-kampaaniariba' ),
+														esc_html( $remote['version'] )
+													);
+													?>
+												</a>
+												<span class="wkr-update-status" role="status" aria-live="polite"></span>
+											</span>
+										<?php endif; ?>
 									<?php else : ?>
 										<span class="wkr-pill wkr-pill--off"><?php esc_html_e( 'Kõik on värske', 'wonom-kampaaniariba' ); ?></span>
 									<?php endif; ?>
@@ -381,5 +405,9 @@ class WKR_Settings {
 			</p>
 		</div>
 		<?php
+		// Vajalik siis, kui server küsib uuendamiseks failiõigusi (FTP).
+		if ( function_exists( 'wp_print_request_filesystem_credentials_modal' ) && current_user_can( 'update_plugins' ) ) {
+			wp_print_request_filesystem_credentials_modal();
+		}
 	}
 }

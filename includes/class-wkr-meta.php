@@ -49,7 +49,19 @@ class WKR_Meta {
 			wp_enqueue_style( 'woocommerce_admin_styles' );
 		}
 
-		if ( ! $is_editor ) {
+		// Seadete lehel saab pluginat kohapeal uuendada — selleks on vaja
+		// WordPressi enda uuendusskripti koos oma turvatunnustega.
+		if ( $is_settings && current_user_can( 'update_plugins' ) ) {
+			wp_enqueue_script( 'updates' );
+		}
+
+		if ( ! $is_editor && ! $is_settings ) {
+			return;
+		}
+
+		if ( $is_settings ) {
+			wp_enqueue_script( 'wkr-admin', WKR_URL . 'assets/admin.js', array( 'jquery' ), WKR_VERSION, true );
+			wp_localize_script( 'wkr-admin', 'WKR_ADMIN', array( 'i18n' => self::js_strings() ) );
 			return;
 		}
 
@@ -91,14 +103,27 @@ class WKR_Meta {
 					__( 'detsember', 'wonom-kampaaniariba' ),
 				),
 				'dow'     => array( 'E', 'T', 'K', 'N', 'R', 'L', 'P' ),
-				'i18n'    => array(
-					'translating' => __( 'Tõlgin…', 'wonom-kampaaniariba' ),
-					'failed'      => __( 'Tõlkimine ebaõnnestus.', 'wonom-kampaaniariba' ),
-					'now'         => __( 'Praegu', 'wonom-kampaaniariba' ),
-					'done'        => __( 'Valmis', 'wonom-kampaaniariba' ),
-					'copy'        => __( 'Kopeeri sooduskood', 'wonom-kampaaniariba' ),
-				),
+				'i18n'    => self::js_strings(),
 			)
+		);
+	}
+
+	/**
+	 * Administraatori skripti tekstid.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function js_strings() {
+		return array(
+			'translating' => __( 'Tõlgin…', 'wonom-kampaaniariba' ),
+			'failed'      => __( 'Tõlkimine ebaõnnestus.', 'wonom-kampaaniariba' ),
+			'now'         => __( 'Praegu', 'wonom-kampaaniariba' ),
+			'done'        => __( 'Valmis', 'wonom-kampaaniariba' ),
+			'copy'        => __( 'Kopeeri sooduskood', 'wonom-kampaaniariba' ),
+			'updating'    => __( 'Uuendan…', 'wonom-kampaaniariba' ),
+			'updated'     => __( 'Uuendatud', 'wonom-kampaaniariba' ),
+			'reloading'   => __( 'Valmis. Laen lehe uuesti…', 'wonom-kampaaniariba' ),
+			'updFailed'   => __( 'Uuendamine ebaõnnestus.', 'wonom-kampaaniariba' ),
 		);
 	}
 

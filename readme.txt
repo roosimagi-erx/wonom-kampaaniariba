@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -180,7 +180,15 @@ Oma serveri puhul vali „Oma serveris olev JSON-fail" ja anna aadress. Faili ku
 Tulemust hoitakse vahemälus kuus tundi. Nupp „Kontrolli uuendusi kohe" tühjendab
 vahemälu ja küsib kohe uuesti.
 
+Kui uuendus on saadaval, ilmub olekurea kõrvale nupp „Uuenda kohe versioonile X".
+Uuendus tehakse samal lehel, Pluginad-lehele minna ei ole vaja. Kui brauseris on
+JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisele
+uuendusekraanile, kus uuendus samuti ära tehakse.
+
 == Changelog ==
+
+= 1.8.0 =
+* Uuenduse saab teha otse seadete lehelt — nupp „Uuenda kohe versioonile X" olekurea kõrval.
 
 = 1.7.0 =
 * Kupongile saab plugina alt määrata tooted, tootekategooriad ja välistused, kasutades WooCommerce'i enda valijaid.
