@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.10.2
+Stable tag: 1.10.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,9 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.10.3 =
+* Varskelt paigaldatud pluginal on cron-oleku hoiatusel 20-minutiline ooteaken, et esimese pulsi ootamise ajal ei naidataks alusetut hoiatust.
 
 = 1.10.2 =
 * Seadete leht kontrollib nüüd, kas WP-Cron päriselt käivitub, mitte ainult seda, kas DISABLE_WP_CRON on seatud. Serveri cron-tööga poes ei näidata enam alusetut hoiatust.

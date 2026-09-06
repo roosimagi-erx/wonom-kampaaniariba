@@ -70,6 +70,10 @@ class WKR_Cache {
 			// kohe kinnituse, mitte ei ootaks tund aega.
 			wp_schedule_event( time() + 120, 'hourly', self::HEARTBEAT_HOOK );
 		}
+
+		if ( ! get_option( 'wkr_cron_watch_since' ) ) {
+			update_option( 'wkr_cron_watch_since', time(), false );
+		}
 	}
 
 	/**
@@ -92,11 +96,17 @@ class WKR_Cache {
 		$last   = (int) get_option( 'wkr_cron_last_run', 0 );
 		$wp_off = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON;
 
+		$since = (int) get_option( 'wkr_cron_watch_since', 0 );
+
 		// Puls on tunnine. Kaks tundi annab hilinemisele ruumi.
 		if ( $last && ( time() - $last ) < 2 * HOUR_IN_SECONDS ) {
 			$state = 'ok';
 		} elseif ( $last ) {
 			$state = 'stale';
+		} elseif ( $since && ( time() - $since ) < 20 * MINUTE_IN_SECONDS ) {
+			// Värskelt paigaldatud: esimest pulssi tuleb niikuinii oodata,
+			// pole mõtet enne seda hoiatada.
+			$state = 'waiting';
 		} elseif ( $wp_off ) {
 			$state = 'disabled';
 		} else {

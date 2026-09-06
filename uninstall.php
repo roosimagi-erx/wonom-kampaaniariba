@@ -31,6 +31,7 @@ $wkr_options = array(
 	'wkr_deepl_key',
 	'wkr_auto_purge',
 	'wkr_cron_last_run',
+	'wkr_cron_watch_since',
 	'wkr_cf_zone',
 	'wkr_cf_token',
 	'wkr_always_exclude_products',
