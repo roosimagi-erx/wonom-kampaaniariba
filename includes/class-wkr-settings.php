@@ -336,9 +336,45 @@ class WKR_Settings {
 									<?php esc_html_e( 'Cloudflare on selle poe ees. Kui Cloudflare hoiab ka HTML-i (Cache Everything või APO), tuleb ka tema vahemälu tühjendada — täida allolevad väljad.', 'wonom-kampaaniariba' ); ?>
 								</p>
 							<?php endif; ?>
-							<?php if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) : ?>
+							<?php
+							$cron = WKR_Cache::cron_status();
+
+							if ( 'ok' === $cron['state'] ) :
+								?>
+								<p class="description">
+									<span class="wkr-pill wkr-pill--live"><?php esc_html_e( 'Cron töötab', 'wonom-kampaaniariba' ); ?></span>
+									<?php
+									printf(
+										/* translators: %s: human readable time difference */
+										esc_html__( 'Viimane käivitus %s tagasi.', 'wonom-kampaaniariba' ),
+										esc_html( human_time_diff( $cron['last'] ) )
+									);
+
+									if ( $cron['wp_off'] ) {
+										echo ' ';
+										esc_html_e( 'DISABLE_WP_CRON on sees ja cron’i käivitab serveri enda töö — see ongi kõige kindlam seadistus.', 'wonom-kampaaniariba' );
+									}
+									?>
+								</p>
+							<?php elseif ( 'waiting' === $cron['state'] ) : ?>
+								<p class="description">
+									<?php esc_html_e( 'Ootan esimest cron-käivitust. Kontrolli seda lehte paari minuti pärast uuesti.', 'wonom-kampaaniariba' ); ?>
+								</p>
+							<?php else : ?>
 								<p class="wkr-warn" style="max-width:640px">
-									<?php esc_html_e( 'WP-Cron on selles poes välja lülitatud (DISABLE_WP_CRON). Salvestamisel tühjendamine töötab, aga kampaania algus- ja lõpuaja tühjendus jääb tegemata, kui serveris ei ole päris cron-tööd, mis wp-cron.php käivitab.', 'wonom-kampaaniariba' ); ?>
+									<?php
+									if ( 'stale' === $cron['state'] ) {
+										printf(
+											/* translators: %s: human readable time difference */
+											esc_html__( 'WP-Cron ei ole käivitunud alates %s tagasi. Kampaania algus- ja lõpuaja tühjendus jääb tegemata.', 'wonom-kampaaniariba' ),
+											esc_html( human_time_diff( $cron['last'] ) )
+										);
+									} else {
+										esc_html_e( 'WP-Cron on välja lülitatud (DISABLE_WP_CRON) ega ole veel kordagi käivitunud. Kampaania algus- ja lõpuaja tühjendus jääb tegemata, kuni serveris ei ole cron-tööd, mis wp-cron.php käivitab.', 'wonom-kampaaniariba' );
+									}
+									?>
+									<br>
+									<code>*/5 * * * * curl -s <?php echo esc_html( home_url( '/wp-cron.php?doing_wp_cron' ) ); ?> &gt; /dev/null</code>
 								</p>
 							<?php endif; ?>
 						</td>

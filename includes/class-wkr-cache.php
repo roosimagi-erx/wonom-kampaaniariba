@@ -26,10 +26,18 @@ class WKR_Cache {
 	const CRON_HOOK = 'wkr_boundary_purge';
 
 	/**
+	 * Pulsi haak. Selle abil saame teada, kas WP-Cron päriselt käivitub.
+	 */
+	const HEARTBEAT_HOOK = 'wkr_cron_heartbeat';
+
+	/**
 	 * Haagid.
 	 */
 	public static function init() {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'purge' ) );
+
+		add_action( self::HEARTBEAT_HOOK, array( __CLASS__, 'heartbeat' ) );
+		add_action( 'admin_init', array( __CLASS__, 'ensure_heartbeat' ) );
 
 		add_action( 'trashed_post', array( __CLASS__, 'on_post_change' ) );
 		add_action( 'untrashed_post', array( __CLASS__, 'on_post_change' ) );
@@ -46,6 +54,60 @@ class WKR_Cache {
 	 */
 	public static function enabled() {
 		return (bool) get_option( 'wkr_auto_purge', 1 );
+	}
+
+	/**
+	 * Hoolitseb, et puls oleks ajastatud.
+	 *
+	 * DISABLE_WP_CRON konstant ütleb ainult seda, et WordPress ise lehekülastuste
+	 * pealt cron'i ei käivita. See ei ütle midagi selle kohta, kas serveris on
+	 * päris cron-töö, mis wp-cron.php käivitab. Ainus aus viis teada saada on
+	 * ise üks korduv sündmus ajastada ja vaadata, kas see käivitub.
+	 */
+	public static function ensure_heartbeat() {
+		if ( ! wp_next_scheduled( self::HEARTBEAT_HOOK ) ) {
+			// Esimene käivitus paari minuti pärast, et administraator saaks
+			// kohe kinnituse, mitte ei ootaks tund aega.
+			wp_schedule_event( time() + 120, 'hourly', self::HEARTBEAT_HOOK );
+		}
+	}
+
+	/**
+	 * Märgib üles, millal WP-Cron viimati päriselt käivitus.
+	 */
+	public static function heartbeat() {
+		update_option( 'wkr_cron_last_run', time(), false );
+	}
+
+	/**
+	 * Kas cron päriselt käivitub ja millal viimati.
+	 *
+	 * @return array {
+	 *     @type string $state   ok | waiting | stale | disabled
+	 *     @type int    $last    Viimase käivituse ajatempel, 0 kui pole olnud.
+	 *     @type bool   $wp_off  Kas DISABLE_WP_CRON on sees.
+	 * }
+	 */
+	public static function cron_status() {
+		$last   = (int) get_option( 'wkr_cron_last_run', 0 );
+		$wp_off = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON;
+
+		// Puls on tunnine. Kaks tundi annab hilinemisele ruumi.
+		if ( $last && ( time() - $last ) < 2 * HOUR_IN_SECONDS ) {
+			$state = 'ok';
+		} elseif ( $last ) {
+			$state = 'stale';
+		} elseif ( $wp_off ) {
+			$state = 'disabled';
+		} else {
+			$state = 'waiting';
+		}
+
+		return array(
+			'state'  => $state,
+			'last'   => $last,
+			'wp_off' => $wp_off,
+		);
 	}
 
 	/**

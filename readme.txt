@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.10.1
+Stable tag: 1.10.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -143,8 +143,7 @@ Muu vahemälu saab ühendada filtriga:
 Algus- ja lõpuaja tühjendus sõltub WP-Cronist, mis WordPressis käivitub
 lehekülastuste pealt. Tugevalt vahemälustatud poes ei pruugi külastus PHP-ni
 jõuda, seetõttu tasub seadistada serveris päris cron-töö, mis käivitab
-wp-cron.php iga paari minuti tagant. Seadete leht hoiatab, kui WP-Cron on
-konstandiga DISABLE_WP_CRON välja lülitatud.
+wp-cron.php iga paari minuti tagant. Seadete leht ajastab ise tunnise pulsi ja naitab, millal cron viimati kaivitus. Nii on kohe naha, kas seadistus toimib.
 
 Staatiliste failide pärast muretsema ei pea: CSS-i ja JS-i aadressis on plugina
 versiooninumber, seega uuendus toob brauserisse uued failid ise.
@@ -232,6 +231,10 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.10.2 =
+* Seadete leht kontrollib nüüd, kas WP-Cron päriselt käivitub, mitte ainult seda, kas DISABLE_WP_CRON on seatud. Serveri cron-tööga poes ei näidata enam alusetut hoiatust.
+* Plugina eemaldamine koristab kõik seaded ja ajastatud sündmused.
 
 = 1.10.1 =
 * Parandus: seadete lehe uuendusnupp jäi tiksuma ega teinud midagi. WordPressi wp.updates.updatePlugin eeldab Pluginate ekraani ja viskas mujal vea enne päringu saatmist. Nüüd kasutatakse alusfunktsiooni wp.updates.ajax ja nupp ei saa enam kinni jääda.
