@@ -25,9 +25,10 @@
 	bottom: 12px;
 }
 
-.wkr-banner,
-.wkr-mini {
-	position: relative;
+/* position: relative on siin ankur sulgemisnupule — teema ei tohi seda ära võtta */
+.wkr-slot .wkr-banner,
+.wkr-slot .wkr-mini {
+	position: relative !important;
 	display: block;
 	width: 100%;
 	box-sizing: border-box;
@@ -68,9 +69,9 @@
 	pointer-events: none;
 }
 
-.wkr-coupon,
-.wkr-close,
-.wkr-expand {
+.wkr-slot .wkr-coupon,
+.wkr-slot .wkr-close,
+.wkr-slot .wkr-expand {
 	pointer-events: auto;
 }
 
@@ -97,47 +98,74 @@
 	text-decoration: none;
 }
 
+/* Nuputühjendus.
+   Teemad (WoodMart, Storefront jt) annavad kõigile nuppudele oma tausta,
+   raadiuse, suurtähed ja varju. Need reeglid on tavaliselt spetsiifilisemad
+   kui ühe klassiga oma, seetõttu on siin nii kahekordne klass kui !important. */
+.wkr-slot .wkr-coupon,
+.wkr-slot .wkr-close,
+.wkr-slot .wkr-expand {
+	-webkit-appearance: none !important;
+	appearance: none !important;
+	margin: 0;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	width: auto !important;
+	height: auto !important;
+	background-image: none !important;
+	box-shadow: none !important;
+	text-shadow: none !important;
+	text-transform: none !important;
+	text-decoration: none !important;
+	font-family: inherit !important;
+	font-weight: 400;
+	letter-spacing: normal;
+	line-height: 1.5;
+	transition: none !important;
+	outline-offset: 2px;
+}
+
 /* Sooduskood */
-.wkr-coupon {
+.wkr-slot .wkr-coupon {
 	position: relative;
 	z-index: 2;
-	display: inline-flex;
+	display: inline-flex !important;
 	align-items: center;
 	gap: 6px;
-	margin: 5px 0 0;
-	padding: 2px 11px;
-	border: 1px dashed currentColor;
-	border-radius: 99px;
-	background: transparent;
-	color: inherit;
-	font: inherit;
-	font-size: 0.82em;
+	margin: 5px 0 0 !important;
+	padding: 2px 11px !important;
+	border: 1px dashed currentColor !important;
+	border-radius: 99px !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	font-size: 0.82em !important;
 	letter-spacing: 0.03em;
 	line-height: 1.6;
 	cursor: pointer;
 }
 
-.wkr-coupon:hover,
-.wkr-coupon:focus-visible {
-	background: rgba(255, 255, 255, 0.15);
+.wkr-slot .wkr-coupon:hover,
+.wkr-slot .wkr-coupon:focus-visible {
+	background-color: rgba(255, 255, 255, 0.15) !important;
+	color: inherit !important;
 }
 
-.wkr-coupon.is-copied {
-	background: rgba(255, 255, 255, 0.22);
+.wkr-slot .wkr-coupon.is-copied {
+	background-color: rgba(255, 255, 255, 0.22) !important;
 }
 
-.wkr-code {
+.wkr-slot .wkr-code {
 	font-weight: 700;
 	letter-spacing: 0.09em;
 }
 
-.wkr-coupon svg {
+.wkr-slot .wkr-coupon svg {
 	flex: 0 0 auto;
 	opacity: 0.75;
 }
 
-.wkr-mini .wkr-coupon {
-	margin: 0;
+.wkr-slot .wkr-mini .wkr-coupon {
+	margin: 0 !important;
 }
 
 /* Tagasiloendus */
@@ -157,34 +185,39 @@
 	display: none;
 }
 
-/* Sulge / ava */
-.wkr-close,
-.wkr-expand {
-	position: absolute;
-	right: 8px;
-	top: 50%;
-	transform: translateY(-50%);
-	z-index: 2;
-	padding: 5px 8px;
-	border: 0;
-	background: none;
-	color: inherit;
-	font: inherit;
-	font-size: 15px;
-	line-height: 1;
+/* Sulge / ava — alati riba paremas servas, taust läbipaistev */
+.wkr-slot .wkr-close,
+.wkr-slot .wkr-expand {
+	position: absolute !important;
+	right: 8px !important;
+	left: auto !important;
+	top: 50% !important;
+	bottom: auto !important;
+	transform: translateY(-50%) !important;
+	z-index: 3;
+	display: block !important;
+	padding: 5px 8px !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	font-size: 15px !important;
+	line-height: 1 !important;
 	opacity: 0.6;
 	cursor: pointer;
 }
 
-.wkr-expand {
-	font-size: 12px;
+.wkr-slot .wkr-expand {
+	font-size: 12px !important;
 }
 
-.wkr-close:hover,
-.wkr-expand:hover,
-.wkr-close:focus-visible,
-.wkr-expand:focus-visible {
+.wkr-slot .wkr-close:hover,
+.wkr-slot .wkr-expand:hover,
+.wkr-slot .wkr-close:focus-visible,
+.wkr-slot .wkr-expand:focus-visible {
 	opacity: 1;
+	background-color: transparent !important;
+	color: inherit !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
