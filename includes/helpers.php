@@ -226,7 +226,44 @@ function wkr_meta_schema() {
 			'type'    => 'bool',
 			'default' => 0,
 		),
+		'wc_exclude_sale' => array(
+			'type'    => 'bool',
+			'default' => 0,
+		),
+
+		// Toote- ja kategooriapiirangud.
+		'wc_manage_items' => array(
+			'type'    => 'bool',
+			'default' => 0,
+		),
+		'wc_products'     => array(
+			'type'    => 'ids',
+			'default' => array(),
+		),
+		'wc_products_ex'  => array(
+			'type'    => 'ids',
+			'default' => array(),
+		),
+		'wc_cats'         => array(
+			'type'    => 'ids',
+			'default' => array(),
+		),
+		'wc_cats_ex'      => array(
+			'type'    => 'ids',
+			'default' => array(),
+		),
 	);
+}
+
+/**
+ * Poe ülesed piirangud, mis lisatakse iga hallatava kupongi välistustele.
+ *
+ * @param string $key wkr_always_exclude_products | wkr_always_exclude_cats.
+ * @return int[]
+ */
+function wkr_always_excluded( $key ) {
+	$value = get_option( $key, array() );
+	return is_array( $value ) ? array_values( array_filter( array_map( 'absint', $value ) ) ) : array();
 }
 
 /**
@@ -252,6 +289,8 @@ function wkr_get( $post_id, $key ) {
 				return (int) $value;
 			case 'float':
 				return (float) $value;
+			case 'ids':
+				return is_array( $value ) ? array_values( array_filter( array_map( 'absint', $value ) ) ) : array();
 		}
 	}
 

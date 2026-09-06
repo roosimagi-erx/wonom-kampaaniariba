@@ -328,6 +328,21 @@
 	margin-bottom: 4px;
 }
 
+.wkr-sep {
+	border: 0;
+	border-top: 1px solid #e0e0e0;
+	margin: 6px 0 16px;
+}
+
+/* WooCommerce'i select2 väljad tahavad natuke ruumi. */
+.wkr-items .select2-container {
+	margin-top: 2px;
+}
+
+.wkr-items .wkr-field > label {
+	margin-bottom: 6px;
+}
+
 /* ---------- kloonimine ---------- */
 
 .wkr-clone-row {

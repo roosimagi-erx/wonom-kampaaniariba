@@ -364,12 +364,19 @@
 	function bindWoo() {
 		var mode = document.getElementById( 'wkr_wc_mode' );
 		var fields = document.querySelector( '.wkr-woo-fields' );
-		if ( ! mode || ! fields ) {
-			return;
+		if ( mode && fields ) {
+			mode.addEventListener( 'change', function () {
+				fields.hidden = mode.value !== 'manage';
+			} );
 		}
-		mode.addEventListener( 'change', function () {
-			fields.hidden = mode.value !== 'manage';
-		} );
+
+		var manageItems = document.getElementById( 'wkr_wc_manage_items' );
+		var items = document.querySelector( '.wkr-items' );
+		if ( manageItems && items ) {
+			manageItems.addEventListener( 'change', function () {
+				items.hidden = ! manageItems.checked;
+			} );
+		}
 	}
 
 	/* ---------------- automaatne tõlge ---------------- */

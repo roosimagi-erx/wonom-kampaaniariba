@@ -72,6 +72,26 @@ class WKR_Settings {
 
 		register_setting(
 			'wkr_settings',
+			'wkr_always_exclude_products',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_ids' ),
+				'default'           => array(),
+			)
+		);
+
+		register_setting(
+			'wkr_settings',
+			'wkr_always_exclude_cats',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_ids' ),
+				'default'           => array(),
+			)
+		);
+
+		register_setting(
+			'wkr_settings',
 			'wkr_update_source',
 			array(
 				'type'              => 'string',
@@ -133,6 +153,19 @@ class WKR_Settings {
 	}
 
 	/**
+	 * ID-de nimekiri -> puhtad täisarvud.
+	 *
+	 * @param mixed $value Väärtus.
+	 * @return int[]
+	 */
+	public static function sanitize_ids( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+		return array_values( array_unique( array_filter( array_map( 'absint', $value ) ) ) );
+	}
+
+	/**
 	 * Seadete leht.
 	 */
 	public static function page() {
@@ -181,6 +214,68 @@ class WKR_Settings {
 						</td>
 					</tr>
 				</table>
+
+				<?php if ( WKR_Coupon::woo_active() ) : ?>
+					<h2><?php esc_html_e( 'Kupongide püsivälistused', 'wonom-kampaaniariba' ); ?></h2>
+					<p class="description" style="max-width:640px">
+						<?php esc_html_e( 'Need tooted ja kategooriad lisatakse iga plugina hallatava kupongi välistuste hulka. Nii ei pea kinkekaarte iga kampaania juures uuesti meelde tuletama. Kehtib ainult kampaaniatele, kus toote- ja kategooriapiiranguid hallatakse plugina alt.', 'wonom-kampaaniariba' ); ?>
+					</p>
+
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row">
+								<label for="wkr_always_exclude_products"><?php esc_html_e( 'Alati välistatud tooted', 'wonom-kampaaniariba' ); ?></label>
+							</th>
+							<td>
+								<select class="wc-product-search" multiple="multiple" style="width:400px;max-width:100%"
+									id="wkr_always_exclude_products" name="wkr_always_exclude_products[]"
+									data-placeholder="<?php esc_attr_e( 'Otsi toodet…', 'wonom-kampaaniariba' ); ?>"
+									data-action="woocommerce_json_search_products_and_variations">
+									<?php
+									foreach ( wkr_always_excluded( 'wkr_always_exclude_products' ) as $pid ) {
+										$product = wc_get_product( $pid );
+										if ( ! $product ) {
+											continue;
+										}
+										printf(
+											'<option value="%1$s" selected="selected">%2$s</option>',
+											esc_attr( $pid ),
+											esc_html( wp_strip_all_tags( $product->get_formatted_name() ) )
+										);
+									}
+									?>
+								</select>
+								<p class="description"><?php esc_html_e( 'Näiteks kinkekaardid.', 'wonom-kampaaniariba' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="wkr_always_exclude_cats"><?php esc_html_e( 'Alati välistatud kategooriad', 'wonom-kampaaniariba' ); ?></label>
+							</th>
+							<td>
+								<?php
+								$terms = get_terms(
+									array(
+										'taxonomy'   => 'product_cat',
+										'hide_empty' => false,
+									)
+								);
+								$terms    = is_wp_error( $terms ) ? array() : $terms;
+								$selected = wkr_always_excluded( 'wkr_always_exclude_cats' );
+								?>
+								<select class="wc-enhanced-select" multiple="multiple" style="width:400px;max-width:100%"
+									id="wkr_always_exclude_cats" name="wkr_always_exclude_cats[]"
+									data-placeholder="<?php esc_attr_e( 'Ükskõik milline kategooria', 'wonom-kampaaniariba' ); ?>">
+									<?php foreach ( $terms as $term ) : ?>
+										<option value="<?php echo esc_attr( $term->term_id ); ?>" <?php selected( in_array( (int) $term->term_id, $selected, true ) ); ?>>
+											<?php echo esc_html( $term->name ); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+					</table>
+				<?php endif; ?>
 
 				<h2><?php esc_html_e( 'Automaatsed uuendused', 'wonom-kampaaniariba' ); ?></h2>
 				<p class="description" style="max-width:640px">

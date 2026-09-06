@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,8 +82,22 @@ Plugin puudutab ainult neid kuponge, mille ta ise lõi. Kui sama koodiga kupong 
 juba olemas ja selle on keegi käsitsi teinud, jätab plugin selle rahule ja ütleb
 seda ka administraatorile. Ülevõtmiseks tuleb eraldi linnuke märkida.
 
-Toote- ja kategooriapiirangud ning muud peenemad kupongiseaded saab lisada
-WooCommerce'i kupongi enda all — plugin neid üle ei kirjuta.
+Toote- ja kategooriapiiranguid saab hoida kas WooCommerce'i kupongi all või
+plugina sees. Vaikimisi plugin neid välju ei puutu. Linnuke „Halda ka toote- ja
+kategooriapiiranguid siit" lülitab sisse neli välja: tooted, välistatud tooted,
+tootekategooriad ja välistatud kategooriad. Valijad on WooCommerce'i enda omad,
+seega otsing ja käitumine on täpselt samasugused nagu kupongi all.
+
+Kui linnuke on sees, kirjutatakse kõik neli välja igal salvestusel üle, ka
+tühjaks jäetud väljad. Kui see on väljas, jäävad kupongi all käsitsi tehtud
+valikud puutumata.
+
+Seadetes saab määrata püsivälistused — tooted ja kategooriad, mis lisatakse iga
+plugina hallatava kupongi välistuste hulka. Nii ei pea kinkekaarte iga kampaania
+juures uuesti meelde tuletama.
+
+Muud peenemad kupongiseaded, näiteks lubatud e-posti aadressid ja brändid, jäävad
+WooCommerce'i kupongi alla ja plugin neid üle ei kirjuta.
 
 Kampaania prügikasti viimisel läheb hallatav kupong mustandiks; taastamisel
 avaldatakse uuesti. Plugina eemaldamisel kuponge ei kustutata, sest need on seotud
@@ -167,6 +181,11 @@ Tulemust hoitakse vahemälus kuus tundi. Nupp „Kontrolli uuendusi kohe" tühje
 vahemälu ja küsib kohe uuesti.
 
 == Changelog ==
+
+= 1.7.0 =
+* Kupongile saab plugina alt määrata tooted, tootekategooriad ja välistused, kasutades WooCommerce'i enda valijaid.
+* Seadetes püsivälistused, mis lisatakse iga hallatava kupongi külge — kinkekaardid jäävad soodustusest välja ilma iga kord meelde tuletamata.
+* Valik „Ei kehti allahindlusega toodetele".
 
 = 1.6.0 =
 * Teema ujuv „keri üles" nupp ei jää enam jaluse riba ette. Valikud: tõsta riba kohale (vaikimisi), peida, jäta riba taha või ära puutu.

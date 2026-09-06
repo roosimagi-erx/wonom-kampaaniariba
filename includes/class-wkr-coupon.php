@@ -172,6 +172,37 @@ class WKR_Coupon {
 
 		$coupon->set_individual_use( (bool) wkr_get( $campaign_id, 'wc_individual' ) );
 		$coupon->set_free_shipping( (bool) wkr_get( $campaign_id, 'wc_free_ship' ) );
+		$coupon->set_exclude_sale_items( (bool) wkr_get( $campaign_id, 'wc_exclude_sale' ) );
+
+		/*
+		 * Toote- ja kategooriapiiranguid puutume ainult siis, kui kasutaja on
+		 * selle sõnaselgelt sisse lülitanud. Muidu jäävad WooCommerce'i kupongi
+		 * all käsitsi tehtud valikud alles.
+		 */
+		if ( wkr_get( $campaign_id, 'wc_manage_items' ) ) {
+			$exclude_products = array_values(
+				array_unique(
+					array_merge(
+						wkr_get( $campaign_id, 'wc_products_ex' ),
+						wkr_always_excluded( 'wkr_always_exclude_products' )
+					)
+				)
+			);
+
+			$exclude_cats = array_values(
+				array_unique(
+					array_merge(
+						wkr_get( $campaign_id, 'wc_cats_ex' ),
+						wkr_always_excluded( 'wkr_always_exclude_cats' )
+					)
+				)
+			);
+
+			$coupon->set_product_ids( wkr_get( $campaign_id, 'wc_products' ) );
+			$coupon->set_excluded_product_ids( $exclude_products );
+			$coupon->set_product_categories( wkr_get( $campaign_id, 'wc_cats' ) );
+			$coupon->set_excluded_product_categories( $exclude_cats );
+		}
 
 		// Aegumine tuleb kampaania lõpuajast. Nii näeb klient pärast kampaaniat
 		// WooCommerce'i enda teadet „kupong on aegunud”, mitte „koodi ei ole”.

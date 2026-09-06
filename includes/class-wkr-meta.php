@@ -43,12 +43,25 @@ class WKR_Meta {
 
 		wp_enqueue_style( 'wkr-admin', WKR_URL . 'assets/admin.css', array(), WKR_VERSION );
 
+		// Seadete lehel on samuti WooCommerce'i tootevalijad.
+		if ( $is_settings && WKR_Coupon::woo_active() ) {
+			wp_enqueue_script( 'wc-enhanced-select' );
+			wp_enqueue_style( 'woocommerce_admin_styles' );
+		}
+
 		if ( ! $is_editor ) {
 			return;
 		}
 
 		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_style( 'wkr-front', WKR_URL . 'assets/front.css', array(), WKR_VERSION );
+
+		// WooCommerce'i enda toote- ja kategooriavalijad, et need näeksid välja
+		// ja käituksid täpselt nagu kupongi enda all.
+		if ( WKR_Coupon::woo_active() ) {
+			wp_enqueue_script( 'wc-enhanced-select' );
+			wp_enqueue_style( 'woocommerce_admin_styles' );
+		}
 		wp_enqueue_script( 'wkr-admin', WKR_URL . 'assets/admin.js', array( 'wp-color-picker' ), WKR_VERSION, true );
 
 		$fonts = array();
@@ -351,13 +364,148 @@ class WKR_Meta {
 				</p>
 			</div>
 
+			<p class="wkr-field">
+				<label class="wkr-check">
+					<input type="checkbox" name="wkr[wc_exclude_sale]" value="1" <?php checked( wkr_get( $post->ID, 'wc_exclude_sale' ), 1 ); ?>>
+					<?php esc_html_e( 'Ei kehti allahindlusega toodetele', 'wonom-kampaaniariba' ); ?>
+				</label>
+			</p>
+
+			<hr class="wkr-sep">
+
+			<p class="wkr-field">
+				<label class="wkr-check">
+					<input type="checkbox" id="wkr_wc_manage_items" name="wkr[wc_manage_items]" value="1" <?php checked( wkr_get( $post->ID, 'wc_manage_items' ), 1 ); ?>>
+					<strong><?php esc_html_e( 'Halda ka toote- ja kategooriapiiranguid siit', 'wonom-kampaaniariba' ); ?></strong>
+				</label>
+				<span class="wkr-hint">
+					<?php esc_html_e( 'Väljas: plugin ei puutu neid välju ja saad neid muuta WooCommerce’i kupongi all. Sees: allolevad valikud kirjutatakse kupongile igal salvestusel, ka tühjaks jäetud väljad.', 'wonom-kampaaniariba' ); ?>
+				</span>
+			</p>
+
+			<div class="wkr-items" <?php echo wkr_get( $post->ID, 'wc_manage_items' ) ? '' : 'hidden'; ?>>
+				<div class="wkr-grid wkr-grid--2">
+					<p class="wkr-field">
+						<label for="wkr_wc_products"><?php esc_html_e( 'Tooted', 'wonom-kampaaniariba' ); ?></label>
+						<?php self::product_select( 'wkr_items[products][]', 'wkr_wc_products', wkr_get( $post->ID, 'wc_products' ) ); ?>
+						<span class="wkr-hint"><?php esc_html_e( 'Tühi = kehtib kõigile toodetele.', 'wonom-kampaaniariba' ); ?></span>
+					</p>
+					<p class="wkr-field">
+						<label for="wkr_wc_products_ex"><?php esc_html_e( 'Välista tooted', 'wonom-kampaaniariba' ); ?></label>
+						<?php self::product_select( 'wkr_items[products_ex][]', 'wkr_wc_products_ex', wkr_get( $post->ID, 'wc_products_ex' ) ); ?>
+						<span class="wkr-hint"><?php esc_html_e( 'Siia lisatakse alati ka seadetes määratud püsivälistused, näiteks kinkekaardid.', 'wonom-kampaaniariba' ); ?></span>
+					</p>
+				</div>
+
+				<div class="wkr-grid wkr-grid--2">
+					<p class="wkr-field">
+						<label for="wkr_wc_cats"><?php esc_html_e( 'Tootekategooriad', 'wonom-kampaaniariba' ); ?></label>
+						<?php self::category_select( 'wkr_items[cats][]', 'wkr_wc_cats', wkr_get( $post->ID, 'wc_cats' ) ); ?>
+						<span class="wkr-hint"><?php esc_html_e( 'Tühi = kehtib kõigile kategooriatele.', 'wonom-kampaaniariba' ); ?></span>
+					</p>
+					<p class="wkr-field">
+						<label for="wkr_wc_cats_ex"><?php esc_html_e( 'Välista kategooriad', 'wonom-kampaaniariba' ); ?></label>
+						<?php self::category_select( 'wkr_items[cats_ex][]', 'wkr_wc_cats_ex', wkr_get( $post->ID, 'wc_cats_ex' ) ); ?>
+					</p>
+				</div>
+
+				<?php
+				$always_p = wkr_always_excluded( 'wkr_always_exclude_products' );
+				$always_c = wkr_always_excluded( 'wkr_always_exclude_cats' );
+				if ( $always_p || $always_c ) :
+					$names = array();
+					foreach ( $always_p as $pid ) {
+						$product = wc_get_product( $pid );
+						if ( $product ) {
+							$names[] = wp_strip_all_tags( $product->get_formatted_name() );
+						}
+					}
+					foreach ( $always_c as $cid ) {
+						$term = get_term( $cid, 'product_cat' );
+						if ( $term && ! is_wp_error( $term ) ) {
+							$names[] = $term->name;
+						}
+					}
+					?>
+					<p class="wkr-hint">
+						<?php
+						printf(
+							/* translators: %s: list of always excluded products and categories */
+							esc_html__( 'Alati välistatud: %s. Muuda seadete alt.', 'wonom-kampaaniariba' ),
+							esc_html( implode( ', ', $names ) )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+			</div>
+
 			<p class="wkr-hint">
 				<?php esc_html_e( 'Kupongi aegumiskuupäev tuleb kampaania lõpuajast — seda eraldi sisestada ei ole vaja. Enne kampaania algust kood ei kehti, isegi kui keegi selle ära arvab: WooCommerce’il endal ei ole „kehtib alates” välja, seda hoiab plugin.', 'wonom-kampaaniariba' ); ?>
 			</p>
-			<p class="wkr-hint">
-				<?php esc_html_e( 'Kupong luuakse kampaania salvestamisel. Toote- ja kategooriapiirangud ning muud peenemad seaded saad lisada WooCommerce’i kupongi enda all — plugin neid üle ei kirjuta.', 'wonom-kampaaniariba' ); ?>
-			</p>
 		</div>
+		<?php
+	}
+
+	/**
+	 * WooCommerce'i tootevalija.
+	 *
+	 * @param string $name Välja nimi.
+	 * @param string $id   Elemendi id.
+	 * @param int[]  $ids  Valitud tooted.
+	 */
+	private static function product_select( $name, $id, $ids ) {
+		?>
+		<select class="wc-product-search" multiple="multiple" style="width:100%"
+			id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
+			data-placeholder="<?php esc_attr_e( 'Otsi toodet…', 'wonom-kampaaniariba' ); ?>"
+			data-action="woocommerce_json_search_products_and_variations">
+			<?php
+			foreach ( (array) $ids as $product_id ) {
+				$product = wc_get_product( $product_id );
+				if ( ! $product ) {
+					continue;
+				}
+				printf(
+					'<option value="%1$s" selected="selected">%2$s</option>',
+					esc_attr( $product_id ),
+					esc_html( wp_strip_all_tags( $product->get_formatted_name() ) )
+				);
+			}
+			?>
+		</select>
+		<?php
+	}
+
+	/**
+	 * Tootekategooriate valija.
+	 *
+	 * @param string $name Välja nimi.
+	 * @param string $id   Elemendi id.
+	 * @param int[]  $ids  Valitud kategooriad.
+	 */
+	private static function category_select( $name, $id, $ids ) {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+			)
+		);
+
+		if ( is_wp_error( $terms ) ) {
+			$terms = array();
+		}
+
+		$ids = array_map( 'absint', (array) $ids );
+		?>
+		<select class="wc-enhanced-select" multiple="multiple" style="width:100%"
+			id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
+			data-placeholder="<?php esc_attr_e( 'Ükskõik milline kategooria', 'wonom-kampaaniariba' ); ?>">
+			<?php foreach ( $terms as $term ) : ?>
+				<option value="<?php echo esc_attr( $term->term_id ); ?>" <?php selected( in_array( (int) $term->term_id, $ids, true ) ); ?>>
+					<?php echo esc_html( $term->name ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
 		<?php
 	}
 
@@ -585,6 +733,11 @@ class WKR_Meta {
 		$schema = wkr_meta_schema();
 
 		foreach ( $schema as $key => $def ) {
+			// Massiivid tulevad eraldi võtme alt, allpool.
+			if ( 'ids' === $def['type'] ) {
+				continue;
+			}
+
 			$value = isset( $raw[ $key ] ) ? $raw[ $key ] : '';
 
 			switch ( $def['type'] ) {
@@ -645,6 +798,21 @@ class WKR_Meta {
 
 				update_post_meta( $post_id, '_wkr_' . $code . '_' . $field, $value );
 			}
+		}
+
+		// Toote- ja kategooriavalikud tulevad eraldi võtme alt, sest need on massiivid.
+		$items = isset( $_POST['wkr_items'] ) ? wp_unslash( $_POST['wkr_items'] ) : array();
+		$map   = array(
+			'products'    => 'wc_products',
+			'products_ex' => 'wc_products_ex',
+			'cats'        => 'wc_cats',
+			'cats_ex'     => 'wc_cats_ex',
+		);
+
+		foreach ( $map as $field => $meta ) {
+			$list = isset( $items[ $field ] ) && is_array( $items[ $field ] ) ? $items[ $field ] : array();
+			$list = array_values( array_unique( array_filter( array_map( 'absint', $list ) ) ) );
+			update_post_meta( $post_id, '_wkr_' . $meta, $list );
 		}
 
 		// WooCommerce'i kupong luuakse või uuendatakse alles siis, kui kõik
