@@ -328,6 +328,19 @@
 	margin-bottom: 4px;
 }
 
+/* ---------- kloonimine ---------- */
+
+.wkr-clone-row {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	align-items: flex-start;
+}
+
+.wkr-clone-row .wkr-hint {
+	margin-top: 0;
+}
+
 /* ---------- olekusildid ---------- */
 
 .wkr-pill {

@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -110,6 +110,17 @@ Kontrolli, et kampaania on avaldatud (publish), „Kampaania sisse lülitatud" o
 märgitud ning praegune aeg jääb algus- ja lõpuaja vahele. Kui teema ei kutsu
 wp_body_open haaki, kasuta lühikoodi.
 
+= Kuidas teha olemasolevast kampaaniast koopia? =
+
+Vii hiir kampaania nime kohale nimekirjas ja vali „Klooni". Sama nupp on ka
+kampaania muutmisvaates avaldamiskastis. Koopia salvestatakse mustandina, kus
+kujundus, mõlema keele tekstid, sooduskood ja ajastus on samad.
+
+Kaks asja jäävad koopial teadlikult originaali külge: WooCommerce'i kupongi
+haldus lülitatakse koopial välja ja seos originaali kupongiga ei kandu üle. Nii
+ei saa koopia kogemata originaali kupongi muuta. Kui tahad, et ka koopia haldaks
+oma kupongi, vaheta kood ära ja lülita haldus uuesti sisse.
+
 = Kas kampaaniaid võib olla mitu korraga? =
 
 Jah. Päisesse ja jalusesse valitakse esimene sobiv kampaania. Järjekorda saab
@@ -156,6 +167,9 @@ Tulemust hoitakse vahemälus kuus tundi. Nupp „Kontrolli uuendusi kohe" tühje
 vahemälu ja küsib kohe uuesti.
 
 == Changelog ==
+
+= 1.5.0 =
+* Kampaania kloonimine: „Klooni" link nimekirjas ja avaldamiskastis. Koopia tuleb mustandina, kupongihaldus on välja lülitatud.
 
 = 1.4.0 =
 * Kleepuv jaluse riba tõuseb automaatselt teema alumise mobiilimenüü kohale, nii et see ei jää enam menüü taha. Lisaks käsitsi lisanihe.
