@@ -1,0 +1,442 @@
+/**
+ * Wonom Kampaaniariba — administraatori vaated.
+ */
+
+.wkr-wrap .wkr-cal-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.wkr-cal-nav {
+	display: inline-flex;
+	gap: 6px;
+}
+
+/* ---------- vormiväljad ---------- */
+
+.wkr-grid {
+	display: grid;
+	gap: 0 20px;
+}
+
+.wkr-grid--2 {
+	grid-template-columns: 1fr 1fr;
+}
+
+.wkr-grid--3 {
+	grid-template-columns: 1fr 1fr 1fr;
+}
+
+@media (max-width: 782px) {
+	.wkr-grid--2,
+	.wkr-grid--3 {
+		grid-template-columns: 1fr;
+	}
+}
+
+.wkr-field {
+	margin: 0 0 14px;
+}
+
+.wkr-field > label {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 600;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #50575e;
+}
+
+.wkr-field input[type="text"],
+.wkr-field input[type="number"],
+.wkr-field select {
+	width: 100%;
+	max-width: 100%;
+}
+
+.wkr-field input[type="number"] {
+	max-width: 120px;
+}
+
+.wkr-hint {
+	display: block;
+	margin-top: 4px;
+	color: #646970;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.wkr-warn {
+	display: block;
+	margin-top: 6px;
+	padding: 5px 9px;
+	border-radius: 4px;
+	background: #fcf0e8;
+	color: #8a3b12;
+	font-size: 12px;
+	line-height: 1.45;
+}
+
+.wkr-check {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 13px;
+}
+
+.wkr-toggles {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 22px;
+	margin: 4px 0 6px;
+	border: 0;
+	padding: 0;
+}
+
+/* ---------- keeleribad ---------- */
+
+.wkr-langbar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin: 6px 0 12px;
+	padding-top: 12px;
+	border-top: 1px solid #e0e0e0;
+}
+
+.wkr-spacer {
+	flex: 1;
+}
+
+.wkr-switch {
+	display: inline-flex;
+	gap: 2px;
+	padding: 3px;
+	border-radius: 6px;
+	background: #f0f0f1;
+}
+
+.wkr-switch button {
+	border: 0;
+	background: transparent;
+	color: #646970;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 5px 12px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.wkr-switch button[aria-pressed="true"] {
+	background: #fff;
+	color: #1d2327;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.wkr-autonote {
+	margin: 0 0 12px;
+	padding: 8px 11px;
+	border-radius: 5px;
+	background: #eef3fb;
+	color: #1c4a80;
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+
+.wkr-autonote.is-rough {
+	background: #fcf6e6;
+	color: #7a5a12;
+}
+
+/* ---------- kuupäevavalija ---------- */
+
+.wkr-dt {
+	position: relative;
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.wkr-dt input.wkr-date {
+	flex: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.wkr-dtbtn {
+	flex: 0 0 auto;
+	width: 32px;
+	height: 30px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #f6f7f7;
+	cursor: pointer;
+	line-height: 1;
+}
+
+.wkr-dtbtn:hover {
+	border-color: #2271b1;
+}
+
+.wkr-dtpop {
+	position: absolute;
+	top: calc(100% + 6px);
+	left: 0;
+	z-index: 100;
+	width: 250px;
+	padding: 10px;
+	border: 1px solid #c3c4c7;
+	border-radius: 6px;
+	background: #fff;
+	box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.45);
+}
+
+.wkr-dtnav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 6px;
+}
+
+.wkr-dtnav button {
+	border: 0;
+	background: none;
+	cursor: pointer;
+	font-size: 16px;
+	padding: 2px 8px;
+	border-radius: 4px;
+	color: #50575e;
+}
+
+.wkr-dtnav button:hover {
+	background: #f0f0f1;
+}
+
+.wkr-dtmonth {
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.wkr-dtgrid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 2px;
+}
+
+.wkr-dtdow {
+	text-align: center;
+	font-size: 10px;
+	color: #787c82;
+	padding: 2px 0;
+}
+
+.wkr-dtgrid button {
+	border: 0;
+	background: none;
+	padding: 5px 0;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.wkr-dtgrid button:hover {
+	background: #f0f0f1;
+}
+
+.wkr-dtgrid button.is-out {
+	color: #a7aaad;
+}
+
+.wkr-dtgrid button.is-today {
+	box-shadow: inset 0 0 0 1px #2271b1;
+}
+
+.wkr-dtgrid button.is-sel {
+	background: #2271b1;
+	color: #fff;
+	font-weight: 600;
+}
+
+.wkr-dttime {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	margin-top: 9px;
+	padding-top: 9px;
+	border-top: 1px solid #e0e0e0;
+}
+
+.wkr-dttime select {
+	min-width: 62px;
+}
+
+.wkr-dtfoot {
+	display: flex;
+	justify-content: flex-end;
+	gap: 6px;
+	margin-top: 9px;
+}
+
+/* ---------- eelvaade ---------- */
+
+.wkr-preview-tools {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 10px;
+}
+
+.wkr-preview-stage {
+	padding: 16px;
+	border-radius: 6px;
+	background: #f0f0f1;
+}
+
+.wkr-preview-stage .wkr-slot {
+	position: static;
+}
+
+.wkr-preview-stage .wkr-mini-note {
+	display: block;
+	font-size: 10px;
+	opacity: 0.6;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	margin-top: 2px;
+}
+
+/* ---------- WooCommerce'i kupong ---------- */
+
+.wkr-woo-status {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin: 0 0 16px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.wkr-woo-fields .wkr-check {
+	display: flex;
+	margin-bottom: 4px;
+}
+
+/* ---------- olekusildid ---------- */
+
+.wkr-pill {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.6;
+}
+
+.wkr-pill--live {
+	background: #e2f3ea;
+	color: #17835a;
+}
+
+.wkr-pill--upcoming {
+	background: #f8efdc;
+	color: #8a5f10;
+}
+
+.wkr-pill--ended,
+.wkr-pill--off {
+	background: #f0f0f1;
+	color: #646970;
+}
+
+.wkr-when {
+	font-variant-numeric: tabular-nums;
+}
+
+.wkr-tz {
+	color: #787c82;
+	font-size: 11px;
+}
+
+/* ---------- kalender ---------- */
+
+.wkr-cal {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 1px;
+	background: #dcdcde;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	overflow: hidden;
+	margin-bottom: 28px;
+}
+
+.wkr-cal-dow {
+	background: #f6f7f7;
+	padding: 6px 2px;
+	text-align: center;
+	font-size: 11px;
+	font-weight: 600;
+	color: #646970;
+}
+
+.wkr-cal-day {
+	background: #fff;
+	min-height: 84px;
+	padding: 5px 6px 7px;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.wkr-cal-day.is-out {
+	background: #fafafa;
+}
+
+.wkr-cal-num {
+	font-size: 11px;
+	color: #646970;
+	font-variant-numeric: tabular-nums;
+}
+
+.wkr-cal-day.is-today .wkr-cal-num {
+	align-self: flex-start;
+	background: #1d2327;
+	color: #fff;
+	border-radius: 3px;
+	padding: 0 4px;
+}
+
+.wkr-cal-bar {
+	display: block;
+	padding: 2px 6px;
+	border-left: 3px solid var(--wkr-bar, #2271b1);
+	border-radius: 2px;
+	background: #f6f7f7;
+	color: #1d2327;
+	font-size: 11px;
+	line-height: 1.4;
+	text-decoration: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.wkr-cal-bar:hover {
+	background: #eef3fb;
+}
+
+.wkr-cal-bar.is-dim {
+	opacity: 0.5;
+}
+
+.wkr-sched td,
+.wkr-sched th {
+	vertical-align: middle;
+}

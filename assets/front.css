@@ -1,0 +1,194 @@
+/**
+ * Wonom Kampaaniariba — poe esikülg.
+ * Kõik värvid, font ja kiht tulevad muutujatena riba enda style-atribuudist.
+ */
+
+.wkr-slot {
+	position: relative;
+	z-index: var(--wkr-z, 90);
+	font-family: var(--wkr-font, inherit);
+	font-size: var(--wkr-size, 13px);
+	line-height: 1.45;
+}
+
+.wkr-slot--stuck,
+.wkr-slot--floating {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.wkr-slot--floating {
+	left: 12px;
+	right: 12px;
+	bottom: 12px;
+}
+
+.wkr-banner,
+.wkr-mini {
+	position: relative;
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	text-align: center;
+	background: var(--wkr-bg, #6a5c53);
+	color: var(--wkr-fg, #f4efe9);
+}
+
+.wkr-banner {
+	padding: 10px 38px;
+}
+
+.wkr-slot--floating .wkr-banner,
+.wkr-slot--floating .wkr-mini {
+	border-radius: 8px;
+	box-shadow: 0 6px 22px -6px rgba(0, 0, 0, 0.45);
+}
+
+.wkr-mini {
+	display: none;
+	padding: 4px 38px;
+	font-size: 0.9em;
+}
+
+.wkr-slot.is-collapsed .wkr-banner {
+	display: none;
+}
+
+.wkr-slot.is-collapsed .wkr-mini {
+	display: block;
+}
+
+/* Tekst laseb klõpsu läbi katvale lingile; nupud püüavad klõpsu ise kinni. */
+.wkr-line {
+	display: block;
+	position: relative;
+	z-index: 1;
+	pointer-events: none;
+}
+
+.wkr-coupon,
+.wkr-close,
+.wkr-expand {
+	pointer-events: auto;
+}
+
+.wkr-l1 {
+	font-weight: 700;
+	color: var(--wkr-hl, inherit);
+}
+
+.wkr-l2 {
+	opacity: 0.96;
+}
+
+.wkr-l3 {
+	opacity: 0.86;
+	font-size: 0.86em;
+}
+
+/* Klõpsatav ala katab riba, aga jääb nuppude alla. */
+.wkr-cover {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	display: block;
+	text-decoration: none;
+}
+
+/* Sooduskood */
+.wkr-coupon {
+	position: relative;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 5px 0 0;
+	padding: 2px 11px;
+	border: 1px dashed currentColor;
+	border-radius: 99px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 0.82em;
+	letter-spacing: 0.03em;
+	line-height: 1.6;
+	cursor: pointer;
+}
+
+.wkr-coupon:hover,
+.wkr-coupon:focus-visible {
+	background: rgba(255, 255, 255, 0.15);
+}
+
+.wkr-coupon.is-copied {
+	background: rgba(255, 255, 255, 0.22);
+}
+
+.wkr-code {
+	font-weight: 700;
+	letter-spacing: 0.09em;
+}
+
+.wkr-coupon svg {
+	flex: 0 0 auto;
+	opacity: 0.75;
+}
+
+.wkr-mini .wkr-coupon {
+	margin: 0;
+}
+
+/* Tagasiloendus */
+.wkr-countdown {
+	display: inline-flex;
+	margin-top: 5px;
+	padding: 2px 9px;
+	border: 1px solid currentColor;
+	border-radius: 99px;
+	font-size: 0.78em;
+	letter-spacing: 0.04em;
+	font-variant-numeric: tabular-nums;
+	opacity: 0.9;
+}
+
+.wkr-countdown:empty {
+	display: none;
+}
+
+/* Sulge / ava */
+.wkr-close,
+.wkr-expand {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 2;
+	padding: 5px 8px;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: 15px;
+	line-height: 1;
+	opacity: 0.6;
+	cursor: pointer;
+}
+
+.wkr-expand {
+	font-size: 12px;
+}
+
+.wkr-close:hover,
+.wkr-expand:hover,
+.wkr-close:focus-visible,
+.wkr-expand:focus-visible {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wkr-slot * {
+		transition: none !important;
+	}
+}

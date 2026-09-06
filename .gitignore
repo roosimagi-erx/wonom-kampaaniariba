@@ -1,0 +1,13 @@
+# Operatsioonisüsteemi prügi
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Toimetite ajutised failid
+*.swp
+*~
+.idea/
+.vscode/
+
+# Ehitatud pakendid ei kuulu koodihoidlasse — need lähevad väljalaske külge
+*.zip
