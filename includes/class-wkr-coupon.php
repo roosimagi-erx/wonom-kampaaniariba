@@ -26,6 +26,7 @@ class WKR_Coupon {
 	 * Haagid.
 	 */
 	public static function init() {
+		add_action( 'wp_ajax_wkr_coupon_status', array( __CLASS__, 'ajax_status' ) );
 		add_filter( 'woocommerce_coupon_is_valid', array( __CLASS__, 'validate' ), 10, 2 );
 		add_action( 'trashed_post', array( __CLASS__, 'on_trash' ) );
 		add_action( 'untrashed_post', array( __CLASS__, 'on_untrash' ) );
@@ -73,6 +74,98 @@ class WKR_Coupon {
 		}
 
 		return $id;
+	}
+
+	/**
+	 * Kupongi olek antud koodi jaoks.
+	 *
+	 * Sama funktsioon teenindab nii lehe esmast joonistamist kui ka AJAX-i, nii
+	 * et administraator näeb koodi muutmisel kohe õiget olekut ega pea kampaaniat
+	 * vahepeal salvestama. Kloonitud kampaanial oli see eriti segadust tekitav:
+	 * väljal seisis uus kood, aga olek rääkis veel originaali omast.
+	 *
+	 * @param int    $campaign_id Kampaania ID.
+	 * @param string $code        Sooduskood.
+	 * @return array
+	 */
+	public static function status_for( $campaign_id, $code ) {
+		$code = self::format_code( $code );
+
+		$out = array(
+			'code'          => $code,
+			'state'         => 'empty',
+			'pill'          => 'off',
+			'label'         => __( 'Koodi pole sisestatud', 'wonom-kampaaniariba' ),
+			'edit_url'      => '',
+			'takeover'      => false,
+			'takeover_text' => '',
+		);
+
+		if ( '' === $code || ! self::woo_active() ) {
+			return $out;
+		}
+
+		$owned    = self::owned_id( $campaign_id );
+		$existing = (int) wc_get_coupon_id_by_code( $code );
+
+		if ( ! $existing ) {
+			$out['state'] = 'none';
+			$out['label'] = __( 'Sellist kupongi WooCommerce’is veel ei ole — plugin loob selle salvestamisel', 'wonom-kampaaniariba' );
+			return $out;
+		}
+
+		$out['edit_url'] = (string) get_edit_post_link( $existing, 'raw' );
+		$owner           = (int) get_post_meta( $existing, self::OWNER_META, true );
+
+		if ( $existing === $owned ) {
+			$out['state'] = 'ours';
+			$out['pill']  = 'live';
+			$out['label'] = __( 'Kupong on olemas ja seda haldab see kampaania', 'wonom-kampaaniariba' );
+			return $out;
+		}
+
+		if ( $owner ) {
+			$out['state'] = 'other';
+			$out['pill']  = 'upcoming';
+			$out['label'] = sprintf(
+				/* translators: %s: campaign title */
+				__( 'Selle koodi kupongi haldab juba kampaania „%s”', 'wonom-kampaaniariba' ),
+				get_the_title( $owner )
+			);
+			return $out;
+		}
+
+		$out['state']         = 'manual';
+		$out['pill']          = 'upcoming';
+		$out['label']         = __( 'Selle koodiga kupong on WooCommerce’is juba olemas', 'wonom-kampaaniariba' );
+		$out['takeover']      = true;
+		$out['takeover_text'] = sprintf(
+			/* translators: %s: coupon code */
+			__( 'Kood „%s” on juba olemas ja selle on keegi käsitsi teinud. Plugin ei muuda seda ilma sinu loata.', 'wonom-kampaaniariba' ),
+			$code
+		);
+
+		return $out;
+	}
+
+	/**
+	 * AJAX: kupongi olek koodi kirjutamise ajal.
+	 */
+	public static function ajax_status() {
+		check_ajax_referer( 'wkr_coupon_status', 'nonce' );
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Puuduvad õigused.', 'wonom-kampaaniariba' ) ), 403 );
+		}
+
+		$campaign = isset( $_POST['campaign'] ) ? absint( $_POST['campaign'] ) : 0;
+		$code     = isset( $_POST['code'] ) ? sanitize_text_field( wp_unslash( $_POST['code'] ) ) : '';
+
+		if ( $campaign && ! current_user_can( 'edit_post', $campaign ) ) {
+			wp_send_json_error( array( 'message' => __( 'Puuduvad õigused.', 'wonom-kampaaniariba' ) ), 403 );
+		}
+
+		wp_send_json_success( self::status_for( $campaign, $code ) );
 	}
 
 	/**

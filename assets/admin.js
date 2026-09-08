@@ -340,23 +340,108 @@
 
 	/* ---------------- keelevahetus ---------------- */
 
+	/*
+	 * Üks keelevaheti juhib nii sisuvälju kui eelvaadet. Varem oli neid kaks ja
+	 * need said omavahel eri seisu — sisus EN, eelvaates ET.
+	 */
 	function bindTabs() {
 		$( '[data-wkr-tab]' ).on( 'click', function () {
 			var lang = $( this ).data( 'wkr-tab' );
+
 			$( '[data-wkr-tab]' ).attr( 'aria-pressed', 'false' );
 			$( this ).attr( 'aria-pressed', 'true' );
 			$( '[data-wkr-panel]' ).prop( 'hidden', true );
 			$( '[data-wkr-panel="' + lang + '"]' ).prop( 'hidden', false );
 			$( '#wkr-translate' ).prop( 'hidden', lang === 'et' );
-		} );
-		$( '#wkr-translate' ).prop( 'hidden', true );
 
-		$( '[data-wkr-prevlang]' ).on( 'click', function () {
-			previewLang = $( this ).data( 'wkr-prevlang' );
-			$( '[data-wkr-prevlang]' ).attr( 'aria-pressed', 'false' );
-			$( this ).attr( 'aria-pressed', 'true' );
+			previewLang = lang;
+			$( '[data-wkr-preview-lang]' ).text( ( CFG.langs && CFG.langs[ lang ] ) || lang.toUpperCase() );
 			renderPreview();
 		} );
+
+		$( '#wkr-translate' ).prop( 'hidden', true );
+	}
+
+	/* ---------------- sooduskoodi olek ----------------
+	   Kloonitud kampaanial seisis väljal juba uus kood, aga olek rääkis veel
+	   originaali kupongist, sest seda loeti ainult lehe laadimisel. Nüüd
+	   küsitakse olekut kohe, kui koodi muudetakse. */
+
+	function bindCouponStatus() {
+		var input = document.getElementById( 'wkr_coupon' );
+		var pill = document.querySelector( '[data-wkr-status-pill]' );
+		var link = document.querySelector( '[data-wkr-status-link]' );
+		var spinner = document.querySelector( '[data-wkr-status-spinner]' );
+		var takeover = document.querySelector( '[data-wkr-takeover]' );
+		var takeoverText = document.querySelector( '[data-wkr-takeover-text]' );
+
+		if ( ! input || ! pill || ! CFG.couponNonce ) {
+			return;
+		}
+
+		var timer = null;
+		var last = input.value.trim();
+
+		function paint( data ) {
+			pill.className = 'wkr-pill wkr-pill--' + ( data.pill || 'off' );
+			pill.textContent = data.label || '';
+
+			if ( link ) {
+				if ( data.edit_url ) {
+					link.href = data.edit_url;
+					link.hidden = false;
+				} else {
+					link.hidden = true;
+				}
+			}
+
+			if ( takeover ) {
+				takeover.hidden = ! data.takeover;
+				if ( takeoverText ) {
+					takeoverText.textContent = data.takeover_text || '';
+				}
+				if ( ! data.takeover ) {
+					var box = takeover.querySelector( 'input[type="checkbox"]' );
+					if ( box ) {
+						box.checked = false;
+					}
+				}
+			}
+		}
+
+		function refresh() {
+			var code = input.value.trim();
+			if ( code === last ) {
+				return;
+			}
+			last = code;
+
+			if ( spinner ) {
+				spinner.classList.add( 'is-active' );
+			}
+
+			$.post( CFG.ajaxUrl, {
+				action: 'wkr_coupon_status',
+				nonce: CFG.couponNonce,
+				campaign: CFG.postId || 0,
+				code: code
+			} ).done( function ( response ) {
+				if ( response && response.success ) {
+					paint( response.data );
+				}
+			} ).always( function () {
+				if ( spinner ) {
+					spinner.classList.remove( 'is-active' );
+				}
+			} );
+		}
+
+		input.addEventListener( 'input', function () {
+			clearTimeout( timer );
+			timer = setTimeout( refresh, 450 );
+		} );
+
+		input.addEventListener( 'blur', refresh );
 	}
 
 	/* ---------------- WooCommerce'i kupong ---------------- */
@@ -549,6 +634,7 @@
 		bindTabs();
 		bindTranslate();
 		bindWoo();
+		bindCouponStatus();
 
 		$( document ).on( 'input change', '[data-wkr], [data-wkr-text]', renderPreview );
 

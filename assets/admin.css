@@ -328,6 +328,36 @@
 	margin-bottom: 4px;
 }
 
+.wkr-woo-status .spinner {
+	float: none;
+	margin: 0;
+	visibility: hidden;
+}
+
+.wkr-woo-status .spinner.is-active {
+	visibility: visible;
+}
+
+.wkr-takeover {
+	margin: 0 0 16px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.wkr-takeover .wkr-warn {
+	margin-bottom: 8px;
+}
+
+.wkr-preview-lang {
+	display: inline-block;
+	padding: 4px 12px;
+	border-radius: 6px;
+	background: #f0f0f1;
+	font-size: 12px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
 .wkr-sep {
 	border: 0;
 	border-top: 1px solid #e0e0e0;

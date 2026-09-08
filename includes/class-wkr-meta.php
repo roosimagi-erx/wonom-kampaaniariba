@@ -85,9 +85,12 @@ class WKR_Meta {
 			'wkr-admin',
 			'WKR_ADMIN',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wkr_translate' ),
-				'fonts'   => $fonts,
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'wkr_translate' ),
+				'couponNonce'  => wp_create_nonce( 'wkr_coupon_status' ),
+				'postId'       => get_the_ID(),
+				'langs'        => wkr_langs(),
+				'fonts'        => $fonts,
 				'months'  => array(
 					__( 'jaanuar', 'wonom-kampaaniariba' ),
 					__( 'veebruar', 'wonom-kampaaniariba' ),
@@ -198,12 +201,15 @@ class WKR_Meta {
 		?>
 		<div class="wkr-preview-wrap">
 			<div class="wkr-preview-tools">
-				<div class="wkr-switch" role="group" aria-label="<?php esc_attr_e( 'Eelvaate keel', 'wonom-kampaaniariba' ); ?>">
-					<?php foreach ( wkr_langs() as $code => $label ) : ?>
-						<button type="button" data-wkr-prevlang="<?php echo esc_attr( $code ); ?>" aria-pressed="<?php echo 'et' === $code ? 'true' : 'false'; ?>"><?php echo esc_html( strtoupper( $code ) ); ?></button>
-					<?php endforeach; ?>
-				</div>
-				<span class="wkr-hint"><?php esc_html_e( 'Eelvaade uueneb kohe, kui midagi allpool muudad.', 'wonom-kampaaniariba' ); ?></span>
+				<?php
+				/*
+				 * Keelevahetust siin ei ole. Eelvaade järgib Sisu ploki keele
+				 * vahekaarte — kaks eraldi lülitit sama asja jaoks ajasid segadusse.
+				 */
+				?>
+				<?php $wkr_langs = wkr_langs(); ?>
+				<span class="wkr-preview-lang" data-wkr-preview-lang><?php echo esc_html( isset( $wkr_langs['et'] ) ? $wkr_langs['et'] : reset( $wkr_langs ) ); ?></span>
+				<span class="wkr-hint"><?php esc_html_e( 'Eelvaade järgib Sisu ploki keelevalikut ja uueneb kohe, kui midagi muudad.', 'wonom-kampaaniariba' ); ?></span>
 			</div>
 			<div class="wkr-preview-stage"><div id="wkr-preview"></div></div>
 		</div>
@@ -285,17 +291,14 @@ class WKR_Meta {
 	 * @param WP_Post $post Kampaania.
 	 */
 	public static function render_woo( $post ) {
-		$mode      = wkr_get( $post->ID, 'wc_mode' );
-		$code      = WKR_Coupon::format_code( wkr_get( $post->ID, 'coupon' ) );
-		$woo       = WKR_Coupon::woo_active();
-		$owned_id  = $woo ? WKR_Coupon::owned_id( $post->ID ) : 0;
-		$existing  = ( $woo && $code ) ? (int) wc_get_coupon_id_by_code( $code ) : 0;
-		$foreign   = $existing && $existing !== $owned_id && ! (int) get_post_meta( $existing, WKR_Coupon::OWNER_META, true );
+		$mode = wkr_get( $post->ID, 'wc_mode' );
 
-		if ( ! $woo ) {
+		if ( ! WKR_Coupon::woo_active() ) {
 			echo '<p class="wkr-warn">' . esc_html__( 'WooCommerce ei ole aktiivne. Riba töötab edasi, aga kupongi luua ei saa.', 'wonom-kampaaniariba' ) . '</p>';
 			return;
 		}
+
+		$status = WKR_Coupon::status_for( $post->ID, wkr_get( $post->ID, 'coupon' ) );
 		?>
 		<p class="wkr-field">
 			<label for="wkr_wc_mode"><?php esc_html_e( 'Mida pluginaga kupongiga teha', 'wonom-kampaaniariba' ); ?></label>
@@ -310,38 +313,24 @@ class WKR_Meta {
 		</p>
 
 		<div class="wkr-woo-status">
-			<?php if ( ! $code ) : ?>
-				<span class="wkr-pill wkr-pill--off"><?php esc_html_e( 'Koodi pole sisestatud', 'wonom-kampaaniariba' ); ?></span>
-			<?php elseif ( $owned_id ) : ?>
-				<span class="wkr-pill wkr-pill--live"><?php esc_html_e( 'Kupong on olemas ja seda haldab see kampaania', 'wonom-kampaaniariba' ); ?></span>
-				<a href="<?php echo esc_url( get_edit_post_link( $owned_id ) ); ?>"><?php esc_html_e( 'Ava WooCommerce’is', 'wonom-kampaaniariba' ); ?></a>
-			<?php elseif ( $existing ) : ?>
-				<span class="wkr-pill wkr-pill--upcoming"><?php esc_html_e( 'Selle koodiga kupong on WooCommerce’is juba olemas', 'wonom-kampaaniariba' ); ?></span>
-				<a href="<?php echo esc_url( get_edit_post_link( $existing ) ); ?>"><?php esc_html_e( 'Ava WooCommerce’is', 'wonom-kampaaniariba' ); ?></a>
-			<?php else : ?>
-				<span class="wkr-pill wkr-pill--off"><?php esc_html_e( 'Sellist kupongi WooCommerce’is veel ei ole', 'wonom-kampaaniariba' ); ?></span>
-			<?php endif; ?>
+			<span class="wkr-pill wkr-pill--<?php echo esc_attr( $status['pill'] ); ?>" data-wkr-status-pill>
+				<?php echo esc_html( $status['label'] ); ?>
+			</span>
+			<a href="<?php echo esc_url( $status['edit_url'] ); ?>" data-wkr-status-link <?php echo $status['edit_url'] ? '' : 'hidden'; ?>>
+				<?php esc_html_e( 'Ava WooCommerce’is', 'wonom-kampaaniariba' ); ?>
+			</a>
+			<span class="spinner" data-wkr-status-spinner></span>
 		</div>
 
-		<div class="wkr-woo-fields" <?php echo 'manage' === $mode ? '' : 'hidden'; ?>>
-			<?php if ( $foreign ) : ?>
-				<p class="wkr-warn">
-					<?php
-					printf(
-						/* translators: %s: coupon code */
-						esc_html__( 'Kood „%s” on WooCommerce’is juba olemas ja selle on keegi käsitsi teinud. Plugin ei muuda seda ilma sinu loata.', 'wonom-kampaaniariba' ),
-						esc_html( $code )
-					);
-					?>
-				</p>
-				<p class="wkr-field">
-					<label class="wkr-check">
-						<input type="checkbox" name="wkr[wc_takeover]" value="1">
-						<?php esc_html_e( 'Võta olemasolev kupong üle ja hakka seda siit haldama', 'wonom-kampaaniariba' ); ?>
-					</label>
-				</p>
-			<?php endif; ?>
+		<p class="wkr-field wkr-takeover" data-wkr-takeover <?php echo $status['takeover'] ? '' : 'hidden'; ?>>
+			<span class="wkr-warn" data-wkr-takeover-text><?php echo esc_html( $status['takeover_text'] ); ?></span>
+			<label class="wkr-check">
+				<input type="checkbox" name="wkr[wc_takeover]" value="1">
+				<?php esc_html_e( 'Võta olemasolev kupong üle ja hakka seda siit haldama', 'wonom-kampaaniariba' ); ?>
+			</label>
+		</p>
 
+		<div class="wkr-woo-fields" <?php echo 'manage' === $mode ? '' : 'hidden'; ?>>
 			<div class="wkr-grid wkr-grid--3">
 				<p class="wkr-field">
 					<label for="wkr_wc_type"><?php esc_html_e( 'Soodustuse liik', 'wonom-kampaaniariba' ); ?></label>
