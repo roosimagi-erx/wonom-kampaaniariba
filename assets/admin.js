@@ -259,6 +259,8 @@
 			';--wkr-hl:' + val( 'hl' ) +
 			';--wkr-size:' + ( val( 'size' ) || 13 ) + 'px' +
 			';--wkr-close-offset:' + ( val( 'close_offset' ) || 0 ) + 'px' +
+			';--wkr-close-size:' + ( val( 'close_size' ) || 22 ) + 'px' +
+			';--wkr-expand-size:' + ( val( 'expand_size' ) || 22 ) + 'px' +
 			';--wkr-font:' + ( fonts[ val( 'font' ) ] || 'inherit' );
 
 		var banner = document.createElement( 'div' );
@@ -321,6 +323,14 @@
 			mini.style.display = 'block';
 			mini.style.marginTop = '6px';
 			mini.innerHTML = banner.querySelector( '.wkr-coupon' ) ? banner.querySelector( '.wkr-coupon' ).outerHTML : '';
+
+			// Avamisnool on eelvaates näha, et selle suurust saaks kohe hinnata.
+			var expand = document.createElement( 'button' );
+			expand.type = 'button';
+			expand.className = 'wkr-expand';
+			expand.textContent = '⌄';
+			mini.appendChild( expand );
+
 			var note = document.createElement( 'span' );
 			note.className = 'wkr-mini-note';
 			note.textContent = lang === 'en' ? 'after closing' : 'pärast sulgemist';

@@ -152,6 +152,14 @@ function wkr_meta_schema() {
 			'type'    => 'int',
 			'default' => 8,
 		),
+		'close_size'   => array(
+			'type'    => 'float',
+			'default' => 22,
+		),
+		'expand_size'  => array(
+			'type'    => 'float',
+			'default' => 22,
+		),
 		'avoid_bottom' => array(
 			'type'    => 'bool',
 			'default' => 1,

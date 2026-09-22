@@ -206,6 +206,10 @@ class WKR_Render {
 		$bottom_offset = max( 0, (int) wkr_get( $post->ID, 'bottom_offset' ) );
 		$inline_style .= ';--wkr-bottom:' . $bottom_offset . 'px';
 
+		// Sulgemisnupu ja avamisnoole suurus.
+		$inline_style .= ';--wkr-close-size:' . max( 8, (float) wkr_get( $post->ID, 'close_size' ) ) . 'px';
+		$inline_style .= ';--wkr-expand-size:' . max( 8, (float) wkr_get( $post->ID, 'expand_size' ) ) . 'px';
+
 		$link = wkr_text( $post->ID, 'link' );
 		if ( $link && $coupon && wkr_get( $post->ID, 'apply_coupon' ) ) {
 			$link = add_query_arg( 'wkr_coupon', rawurlencode( $coupon ), $link );

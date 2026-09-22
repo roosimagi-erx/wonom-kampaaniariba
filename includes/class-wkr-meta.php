@@ -646,7 +646,22 @@ class WKR_Meta {
 				<label for="wkr_close_offset"><?php esc_html_e( 'Nupu kaugus servast (px)', 'wonom-kampaaniariba' ); ?></label>
 				<input type="number" id="wkr_close_offset" name="wkr[close_offset]" min="0" max="300" step="1"
 					value="<?php echo esc_attr( wkr_get( $post->ID, 'close_offset' ) ); ?>" data-wkr="close_offset">
-				<span class="wkr-hint"><?php esc_html_e( 'Suurenda, et nupp läheks „keri üles” nupust mööda. Näiteks 70.', 'wonom-kampaaniariba' ); ?></span>
+				<span class="wkr-hint"><?php esc_html_e( 'Riba külgpolster arvestab sellega, nii et tekst jääb nupust alati eemale. Vaikimisi 8.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+		</div>
+
+		<div class="wkr-grid wkr-grid--2">
+			<p class="wkr-field">
+				<label for="wkr_close_size"><?php esc_html_e( 'Sulgemisnupu ✕ suurus (px)', 'wonom-kampaaniariba' ); ?></label>
+				<input type="number" id="wkr_close_size" name="wkr[close_size]" min="8" max="60" step="0.5"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'close_size' ) ); ?>" data-wkr="close_size">
+				<span class="wkr-hint"><?php esc_html_e( 'Vaikimisi 22.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+			<p class="wkr-field">
+				<label for="wkr_expand_size"><?php esc_html_e( 'Avamisnoole ⌄ suurus (px)', 'wonom-kampaaniariba' ); ?></label>
+				<input type="number" id="wkr_expand_size" name="wkr[expand_size]" min="8" max="60" step="0.5"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'expand_size' ) ); ?>" data-wkr="expand_size">
+				<span class="wkr-hint"><?php esc_html_e( 'Nool kokkukäinud ribal, millega klient pakkumise tagasi avab. Vaikimisi 22.', 'wonom-kampaaniariba' ); ?></span>
 			</p>
 		</div>
 

@@ -57,7 +57,7 @@
 .wkr-slot--close-left,
 .wkr-slot--close-top-right,
 .wkr-slot--close-top-left {
-	--wkr-pad-x: max(38px, calc(var(--wkr-close-offset, 8px) + 34px));
+	--wkr-pad-x: max(38px, calc(var(--wkr-close-offset, 8px) + var(--wkr-close-size, 22px) + 14px));
 }
 
 /* Vaikeolek: näha on täisriba. */
@@ -218,7 +218,7 @@
 	border-radius: 0 !important;
 	background-color: transparent !important;
 	color: inherit !important;
-	font-size: 22.5px !important;
+	font-size: var(--wkr-close-size, 22px) !important;
 	font-weight: 700 !important;
 	line-height: 1 !important;
 	opacity: 0.6;
@@ -261,10 +261,9 @@
 	transform: none !important;
 }
 
-/* Ava-nool jääb tagasihoidlikuks — suurendamist soovis ainult sulgemisnupp. */
+/* Avamisnoolel on oma suurus, et see ei jääks suurema risti kõrval kiduraks. */
 .wkr-slot .wkr-expand {
-	font-size: 12px !important;
-	font-weight: 400 !important;
+	font-size: var(--wkr-expand-size, 22px) !important;
 }
 
 .wkr-slot .wkr-close:hover,

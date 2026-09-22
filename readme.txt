@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.11.2
+Stable tag: 1.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,10 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.12.0 =
+* Sulgemisnupu ja avamisnoole suurus on nuud kampaania seadetes muudetav. Nool oli varem fikseeritud 12px ja jai suurema risti korval kiduraks.
+* Avamisnool on naha ka administraatori elavas eelvaates.
 
 = 1.11.2 =
 * Riba kulgpolster arvestab nuud sulgemisnupu kaugusega servast, nii et tekst ei jookse kunagi nupu alla ega satu sellega vastamisi.
