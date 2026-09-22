@@ -46,15 +46,29 @@
 	box-shadow: 0 6px 22px -6px rgba(0, 0, 0, 0.45);
 }
 
+/* Külgpolster hoitakse sulgemisnupust eespool, et tekst ei jookseks nupu alla.
+   Nupu kaugus servast on seadistatav, seega peab ka polster sellega kaasa käima —
+   muidu satub suure kauguse korral nupp otse teksti kõrvale. */
+.wkr-slot {
+	--wkr-pad-x: 38px;
+}
+
+.wkr-slot--close-right,
+.wkr-slot--close-left,
+.wkr-slot--close-top-right,
+.wkr-slot--close-top-left {
+	--wkr-pad-x: max(38px, calc(var(--wkr-close-offset, 8px) + 34px));
+}
+
 /* Vaikeolek: näha on täisriba. */
 .wkr-slot .wkr-banner {
 	display: block;
-	padding: 10px 38px;
+	padding: 10px var(--wkr-pad-x, 38px);
 }
 
 .wkr-slot .wkr-mini {
 	display: none;
-	padding: 4px 38px;
+	padding: 4px var(--wkr-pad-x, 38px);
 	font-size: 0.9em;
 }
 
