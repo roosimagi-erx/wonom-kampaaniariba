@@ -116,8 +116,22 @@
 			} );
 		}
 
-		// Serveripoolne inline-skript pani klassi juba enne joonistamist; kui riba
-		// pole kokkukäivat versiooni, peidame ta siin päris ära.
+		/*
+		 * Taastame suletud oleku klassina. Head-skript hoidis seda seni
+		 * ajutise stiiliga; kui see jäi kiirendusplugina taha kinni, teeb
+		 * selle töö ära see rida.
+		 */
+		var remembered = false;
+		try {
+			remembered = !! localStorage.getItem( key( slot ) );
+		} catch ( e ) {
+			remembered = false;
+		}
+
+		if ( remembered ) {
+			slot.classList.add( 'is-collapsed' );
+		}
+
 		if ( slot.classList.contains( 'is-collapsed' ) && ! hasMini ) {
 			slot.style.display = 'none';
 		}
@@ -329,6 +343,15 @@
 
 	function start() {
 		Array.prototype.forEach.call( document.querySelectorAll( '.wkr-slot' ), bindSlot );
+
+		/*
+		 * Varajane stiil on oma töö teinud — edasi juhib olekut klass, muidu
+		 * jääks !important reegel avamisnoolele vastu töötama.
+		 */
+		var early = document.getElementById( 'wkr-restore-style' );
+		if ( early && early.parentNode ) {
+			early.parentNode.removeChild( early );
+		}
 		ticker();
 		refresh();
 

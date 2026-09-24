@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.12.0
+Stable tag: 1.13.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,10 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.13.0 =
+* Parandus: varem suletud riba ilmus jargmisel lehel hetkeks uuesti avatuna ja kukkus kokku alles siis, kui kulastaja midagi tegi. Oleku taastamine kaib nuud uhe skriptiga head-osas, mida kiirendusplugin ei saa valiseks defer-skriptiks umber kirjutada.
+* Kui kiirendusplugin viivitab kogu JavaScripti, lisa valjajatmiste hulka margisona wkr-restore. Seadete leht tuletab seda meelde.
 
 = 1.12.0 =
 * Sulgemisnupu ja avamisnoole suurus on nuud kampaania seadetes muudetav. Nool oli varem fikseeritud 12px ja jai suurema risti korval kiduraks.

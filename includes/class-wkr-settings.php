@@ -336,6 +336,14 @@ class WKR_Settings {
 									<?php esc_html_e( 'Cloudflare on selle poe ees. Kui Cloudflare hoiab ka HTML-i (Cache Everything või APO), tuleb ka tema vahemälu tühjendada — täida allolevad väljad.', 'wonom-kampaaniariba' ); ?>
 								</p>
 							<?php endif; ?>
+							<?php if ( class_exists( '\FlyingPress\Purge' ) || function_exists( 'rocket_clean_domain' ) || has_action( 'litespeed_purge_all' ) ) : ?>
+								<p class="wkr-warn" style="max-width:640px">
+									<?php esc_html_e( 'Kui su kiirendusplugin viivitab JavaScripti kuni külastaja esimese tegevuseni (FlyingPressis „Delay All JavaScript”), lisa väljajätmiste hulka märksõna:', 'wonom-kampaaniariba' ); ?>
+									<code>wkr-restore</code>
+									<br>
+									<?php esc_html_e( 'Ilma selleta jõuab varem suletud riba uuel lehel hetkeks avatuna ilmuda ja kukub kokku alles siis, kui külastaja midagi teeb.', 'wonom-kampaaniariba' ); ?>
+								</p>
+							<?php endif; ?>
 							<?php
 							$cron = WKR_Cache::cron_status();
 

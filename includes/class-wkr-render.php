@@ -26,6 +26,7 @@ class WKR_Render {
 	 */
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ) );
+		add_action( 'wp_head', array( __CLASS__, 'restore_script' ), 1 );
 		add_action( 'wp_body_open', array( __CLASS__, 'top' ), 5 );
 		add_action( 'wp_footer', array( __CLASS__, 'bottom' ), 5 );
 		add_shortcode( 'wonom_banner', array( __CLASS__, 'shortcode' ) );
@@ -72,6 +73,60 @@ class WKR_Render {
 			$url = 'https://fonts.googleapis.com/css2?family=' . implode( '&family=', array_keys( $needed ) ) . '&display=swap';
 			wp_enqueue_style( 'wkr-fonts', $url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
 		}
+	}
+
+	/**
+	 * Millised ribad sellel lehel üldse renderduvad.
+	 *
+	 * @return array<int,array{0:int,1:string}> Paarid [kampaania ID, koht].
+	 */
+	private static function slots_on_page() {
+		$slots = array();
+
+		foreach ( array( 'top', 'bottom' ) as $place ) {
+			$post = self::pick( $place );
+			if ( $post ) {
+				$slots[] = array( (int) $post->ID, $place );
+			}
+		}
+
+		return $slots;
+	}
+
+	/**
+	 * Taastab varem suletud riba oleku enne lehe joonistamist.
+	 *
+	 * See peab jooksma <head>-is ja sünkroonselt. Kui see skript jääb hiljaks,
+	 * jõuab riba enne avatuna ära joonistuda ja alles siis kokku kukkuda —
+	 * külastajale paistab see vilkumisena.
+	 *
+	 * Kiirenduspluginad, mis viivitavad kogu JavaScripti kuni esimese
+	 * kasutaja tegevuseni, lükkavad ka selle edasi. Skript kannab seetõttu
+	 * selget märksõna „wkr-restore”, mille saab nende väljajätmiste hulka lisada.
+	 */
+	public static function restore_script() {
+		if ( is_admin() ) {
+			return;
+		}
+
+		$slots = self::slots_on_page();
+		if ( ! $slots ) {
+			return;
+		}
+
+		$list = array();
+		foreach ( $slots as $slot ) {
+			$list[] = array( (string) $slot[0], $slot[1] );
+		}
+		?>
+<script id="wkr-restore" data-no-optimize="1" data-no-defer="1" data-no-delay="1" data-cfasync="false">
+/* wkr-restore */
+(function(){try{var s=<?php echo wp_json_encode( $list, JSON_HEX_TAG | JSON_HEX_AMP ); ?>,c="",i,k;
+for(i=0;i<s.length;i++){k="wkr_d_"+s[i][0]+"_"+s[i][1];
+if(localStorage.getItem(k)){c+="#wkr-"+s[i][0]+"-"+s[i][1]+" .wkr-banner{display:none!important}#wkr-"+s[i][0]+"-"+s[i][1]+" .wkr-mini{display:block!important}";}}
+if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textContent=c;(document.head||document.documentElement).appendChild(e);}}catch(e){}})();
+</script>
+		<?php
 	}
 
 	/**
@@ -218,6 +273,7 @@ class WKR_Render {
 		ob_start();
 		?>
 		<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
+			id="<?php echo esc_attr( 'wkr-' . $id . '-' . $place ); ?>"
 			style="<?php echo esc_attr( $inline_style ); ?>"
 			data-wkr-id="<?php echo esc_attr( $id ); ?>"
 			data-wkr-place="<?php echo esc_attr( $place ); ?>"
@@ -266,10 +322,13 @@ class WKR_Render {
 				</div>
 			<?php endif; ?>
 		</div>
-		<?php if ( $closes ) : ?>
-			<script>/* <![CDATA[ */(function(){try{var s=document.currentScript.previousElementSibling;if(s&&localStorage.getItem('wkr_d_'+s.getAttribute('data-wkr-id')+'_'+s.getAttribute('data-wkr-place'))){s.className+=' is-collapsed';}}catch(e){}})();/* ]]> */</script>
-			<?php
-		endif;
+		<?php
+		/*
+		 * Siin oli varem iga riba järel oma inline-skript, mis luges suletud
+		 * oleku localStorage'ist. Kiirenduspluginad kirjutasid selle ümber
+		 * välise defer-skriptiga, mille tõttu riba jõudis enne avatuna
+		 * joonistuda. Nüüd teeb seda üks skript <head>-is, vaata restore_script().
+		 */
 
 		return trim( ob_get_clean() );
 	}
