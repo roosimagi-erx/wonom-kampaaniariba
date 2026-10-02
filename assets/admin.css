@@ -1,25 +1,430 @@
-/**
- * Wonom Kampaaniariba — administraatori vaated.
- */
+/* =====================================================================
+ * Wonom Kampaaniariba — admin-kujundus
+ *
+ * Sama disainikeel mis Wonom Feedil: samad värvi- ja raadiusmuutujad,
+ * samad kaardid, nupud ja sildid. Kõik on piiratud klassiga body.wkr-app,
+ * mis lisatakse ainult selle plugina ekraanidele — ülejäänud WordPressi
+ * admin jääb puutumata.
+ * ================================================================== */
 
-.wkr-wrap .wkr-cal-head {
+:root {
+	--w-bg: #f4f6fa;
+	--w-card: #ffffff;
+	--w-border: #e4e7ee;
+	--w-border-strong: #cfd5df;
+	--w-text: #1d2433;
+	--w-muted: #697386;
+	--w-faint: #98a1b2;
+	--w-primary: #2563eb;
+	--w-primary-hover: #1d4fd7;
+	--w-primary-soft: #edf3ff;
+	--w-ok: #15803d;
+	--w-ok-soft: #e9f8ef;
+	--w-warn: #a15c07;
+	--w-warn-soft: #fff6e5;
+	--w-danger: #c62828;
+	--w-danger-soft: #fdecec;
+	--w-radius: 12px;
+	--w-radius-sm: 8px;
+	--w-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--w-ring: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+/* --- Leht ja taust --------------------------------------------------- */
+
+body.wkr-app,
+body.wkr-app #wpwrap,
+body.wkr-app #wpcontent,
+body.wkr-app #wpbody-content {
+	background: var(--w-bg);
+}
+
+body.wkr-app #wpcontent {
+	padding-left: 0;
+}
+
+body.wkr-app #wpbody-content {
+	/* WordPress annab sellele width:100% — ilma border-box'ita lükkaks külgvahe lehe laiemaks kui ekraan. */
+	box-sizing: border-box;
+	padding: 0 28px 40px;
+	color: var(--w-text);
+}
+
+body.wkr-app .wrap {
+	margin: 24px 0 0;
+}
+
+body.wkr-app .wrap h1,
+body.wkr-app .wrap > h1.wp-heading-inline {
+	font-size: 22px;
+	font-weight: 650;
+	color: var(--w-text);
+	padding: 0;
+	margin: 0 12px 16px 0;
+}
+
+body.wkr-app .wrap .page-title-action {
+	border-radius: var(--w-radius-sm);
+	border: 1px solid var(--w-border-strong);
+	background: var(--w-card);
+	color: var(--w-text);
+	padding: 6px 14px;
+	font-weight: 600;
+	top: -3px;
+}
+
+body.wkr-app .wrap .page-title-action:hover {
+	border-color: var(--w-primary);
+	color: var(--w-primary);
+	background: var(--w-card);
+}
+
+body.wkr-app hr.wp-header-end {
+	display: none;
+}
+
+/* --- Ülemine riba ---------------------------------------------------- */
+
+.wkr-appbar {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
+	gap: 18px;
+	padding: 12px 28px;
+	background: var(--w-card);
+	border-bottom: 1px solid var(--w-border);
+	position: sticky;
+	top: 32px;
+	z-index: 50;
+}
+
+.wkr-brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	text-decoration: none;
+	color: var(--w-text);
+	flex-shrink: 0;
+}
+
+.wkr-brand:hover,
+.wkr-brand:focus {
+	color: var(--w-text);
+	box-shadow: none;
+}
+
+.wkr-logo {
+	display: grid;
+	place-items: center;
+	width: 30px;
+	height: 30px;
+	border-radius: var(--w-radius-sm);
+	background: var(--w-primary-soft);
+	color: var(--w-primary);
+}
+
+.wkr-logo .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+}
+
+.wkr-brand-name {
+	font-weight: 650;
+	font-size: 14px;
+	letter-spacing: -0.01em;
+}
+
+.wkr-brand-version {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--w-faint);
+	background: var(--w-bg);
+	border-radius: 20px;
+	padding: 2px 8px;
+}
+
+.wkr-nav {
+	display: flex;
+	align-items: center;
+	gap: 2px;
 	flex-wrap: wrap;
 }
 
-.wkr-cal-nav {
-	display: inline-flex;
-	gap: 6px;
+.wkr-nav a {
+	display: inline-block;
+	padding: 7px 13px;
+	border-radius: var(--w-radius-sm);
+	font-size: 13px;
+	font-weight: 550;
+	color: var(--w-muted);
+	text-decoration: none;
 }
 
-/* ---------- vormiväljad ---------- */
+.wkr-nav a:hover {
+	background: var(--w-bg);
+	color: var(--w-text);
+}
+
+.wkr-nav a.is-active {
+	background: var(--w-primary-soft);
+	color: var(--w-primary);
+	font-weight: 650;
+}
+
+.wkr-appbar .wkr-new {
+	margin-left: auto;
+}
+
+/* --- Nupud ----------------------------------------------------------- */
+
+body.wkr-app .button {
+	border-radius: var(--w-radius-sm);
+	border-color: var(--w-border-strong);
+	color: var(--w-text);
+	background: var(--w-card);
+	min-height: 34px;
+	line-height: 32px;
+	padding: 0 14px;
+	font-weight: 500;
+	box-shadow: 0 1px 1px rgba(16, 24, 40, 0.04);
+}
+
+body.wkr-app .button:hover {
+	border-color: var(--w-primary);
+	color: var(--w-primary);
+	background: var(--w-card);
+}
+
+body.wkr-app .button:focus {
+	box-shadow: var(--w-ring);
+	border-color: var(--w-primary);
+}
+
+body.wkr-app .button-primary,
+body.wkr-app .button.button-primary {
+	background: var(--w-primary);
+	border-color: var(--w-primary);
+	color: #fff;
+	font-weight: 600;
+}
+
+body.wkr-app .button-primary:hover,
+body.wkr-app .button.button-primary:hover {
+	background: var(--w-primary-hover);
+	border-color: var(--w-primary-hover);
+	color: #fff;
+}
+
+body.wkr-app .button-small {
+	min-height: 28px;
+	line-height: 26px;
+	padding: 0 10px;
+	font-size: 12px;
+}
+
+body.wkr-app .button-link {
+	color: var(--w-primary);
+	text-decoration: none;
+}
+
+body.wkr-app .button-link:hover {
+	text-decoration: underline;
+}
+
+/* --- Sisendväljad ---------------------------------------------------- */
+
+body.wkr-app input[type="text"],
+body.wkr-app input[type="number"],
+body.wkr-app input[type="search"],
+body.wkr-app input[type="url"],
+body.wkr-app input[type="email"],
+body.wkr-app input[type="password"],
+body.wkr-app select,
+body.wkr-app textarea {
+	border: 1px solid var(--w-border-strong);
+	border-radius: var(--w-radius-sm);
+	min-height: 34px;
+	padding: 0 10px;
+	color: var(--w-text);
+	background-color: var(--w-card);
+	box-shadow: none;
+	font-size: 13px;
+}
+
+body.wkr-app select {
+	padding-right: 28px;
+}
+
+body.wkr-app textarea {
+	padding: 8px 10px;
+}
+
+body.wkr-app input:focus,
+body.wkr-app select:focus,
+body.wkr-app textarea:focus {
+	border-color: var(--w-primary);
+	box-shadow: var(--w-ring);
+	outline: none;
+}
+
+body.wkr-app input[type="checkbox"],
+body.wkr-app input[type="radio"] {
+	border-color: var(--w-border-strong);
+}
+
+body.wkr-app input[type="checkbox"]:checked {
+	background: var(--w-primary);
+	border-color: var(--w-primary);
+}
+
+body.wkr-app input[type="checkbox"]:checked::before {
+	filter: brightness(0) invert(1);
+}
+
+/* Värvivalija pilt jääb ümaraks koos ülejäänuga. */
+body.wkr-app .wp-picker-container .wp-color-result.button {
+	border-radius: var(--w-radius-sm);
+	min-height: 34px;
+}
+
+/* --- Teated ---------------------------------------------------------- */
+
+body.wkr-app .notice,
+body.wkr-app div.updated,
+body.wkr-app div.error {
+	border-radius: var(--w-radius-sm);
+	border: 1px solid var(--w-border);
+	border-left-width: 4px;
+	box-shadow: var(--w-shadow);
+	margin: 16px 0;
+}
+
+body.wkr-app .notice-success { border-left-color: var(--w-ok); background: var(--w-ok-soft); }
+body.wkr-app .notice-warning { border-left-color: #e0a100; background: var(--w-warn-soft); }
+body.wkr-app .notice-error { border-left-color: var(--w-danger); background: var(--w-danger-soft); }
+body.wkr-app .notice-info { border-left-color: var(--w-primary); background: var(--w-primary-soft); }
+
+/* --- Kaardid: meta box'id ja seadete plokid -------------------------- */
+
+body.wkr-app .postbox {
+	background: var(--w-card);
+	border: 1px solid var(--w-border);
+	border-radius: var(--w-radius);
+	box-shadow: var(--w-shadow);
+	margin-bottom: 18px;
+	overflow: hidden;
+}
+
+body.wkr-app .postbox-header {
+	border-bottom: 1px solid var(--w-border);
+}
+
+body.wkr-app .postbox-header h2,
+body.wkr-app .postbox .hndle {
+	font-size: 14px;
+	font-weight: 650;
+	padding: 14px 18px;
+	color: var(--w-text);
+}
+
+body.wkr-app .postbox .inside {
+	padding: 14px 18px 18px;
+	margin: 0;
+}
+
+body.wkr-app .postbox .handle-actions .handle-order-higher,
+body.wkr-app .postbox .handle-actions .handle-order-lower {
+	display: none;
+}
+
+/* Kampaania pealkirja väli */
+body.wkr-app #titlediv #title {
+	border-radius: var(--w-radius);
+	border: 1px solid var(--w-border-strong);
+	padding: 10px 16px;
+	font-size: 18px;
+	font-weight: 600;
+	background: var(--w-card);
+}
+
+body.wkr-app #titlediv #title:focus {
+	border-color: var(--w-primary);
+	box-shadow: var(--w-ring);
+}
+
+/* Seadete leht: iga h2 + form-table paar on oma kaart. */
+body.wkr-app .wkr-wrap form > h2 {
+	margin: 26px 0 0;
+	padding: 16px 20px 0;
+	font-size: 15px;
+	font-weight: 650;
+	color: var(--w-text);
+	background: var(--w-card);
+	border: 1px solid var(--w-border);
+	border-bottom: 0;
+	border-radius: var(--w-radius) var(--w-radius) 0 0;
+	box-shadow: var(--w-shadow);
+	max-width: 1080px;
+	box-sizing: border-box;
+}
+
+body.wkr-app .wkr-wrap form > h2 + .description {
+	margin: 0;
+	padding: 6px 20px 0;
+	background: var(--w-card);
+	border-left: 1px solid var(--w-border);
+	border-right: 1px solid var(--w-border);
+	color: var(--w-muted);
+	max-width: 1080px;
+	box-sizing: border-box;
+}
+
+body.wkr-app .wkr-wrap .form-table {
+	margin: 0;
+	padding: 4px 20px 10px;
+	background: var(--w-card);
+	border: 1px solid var(--w-border);
+	border-top: 0;
+	border-radius: 0 0 var(--w-radius) var(--w-radius);
+	box-shadow: var(--w-shadow);
+	max-width: 1080px;
+	box-sizing: border-box;
+}
+
+body.wkr-app .wkr-wrap .form-table tr {
+	border-bottom: 1px solid #f0f2f6;
+}
+
+body.wkr-app .wkr-wrap .form-table tr:last-child {
+	border-bottom: none;
+}
+
+body.wkr-app .wkr-wrap .form-table th {
+	width: 230px;
+	padding: 16px 16px 16px 0;
+	font-weight: 600;
+	font-size: 13px;
+	color: var(--w-text);
+}
+
+body.wkr-app .wkr-wrap .form-table td {
+	padding: 12px 0;
+}
+
+body.wkr-app .wkr-wrap .description {
+	color: var(--w-muted);
+	font-size: 12.5px;
+}
+
+body.wkr-app .wkr-wrap h2:not(.wp-heading-inline) + p.description {
+	margin-bottom: 0;
+}
+
+/* --- Vormiväljad meta box'ides --------------------------------------- */
 
 .wkr-grid {
 	display: grid;
-	gap: 0 20px;
+	gap: 0 22px;
 }
 
 .wkr-grid--2 {
@@ -30,7 +435,7 @@
 	grid-template-columns: 1fr 1fr 1fr;
 }
 
-@media (max-width: 782px) {
+@media (max-width: 900px) {
 	.wkr-grid--2,
 	.wkr-grid--3 {
 		grid-template-columns: 1fr;
@@ -38,17 +443,15 @@
 }
 
 .wkr-field {
-	margin: 0 0 14px;
+	margin: 0 0 16px;
 }
 
 .wkr-field > label {
 	display: block;
-	margin-bottom: 4px;
+	margin-bottom: 5px;
 	font-weight: 600;
 	font-size: 12px;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	color: #50575e;
+	color: var(--w-muted);
 }
 
 .wkr-field input[type="text"],
@@ -59,54 +462,68 @@
 }
 
 .wkr-field input[type="number"] {
-	max-width: 120px;
+	max-width: 140px;
 }
 
 .wkr-hint {
 	display: block;
-	margin-top: 4px;
-	color: #646970;
+	margin-top: 5px;
+	color: var(--w-muted);
 	font-size: 12px;
 	line-height: 1.5;
 }
 
 .wkr-warn {
 	display: block;
-	margin-top: 6px;
-	padding: 5px 9px;
+	margin-top: 7px;
+	padding: 8px 11px;
+	border-radius: var(--w-radius-sm);
+	background: var(--w-warn-soft);
+	color: var(--w-warn);
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+
+.wkr-warn code {
+	background: rgba(161, 92, 7, 0.12);
+	color: inherit;
 	border-radius: 4px;
-	background: #fcf0e8;
-	color: #8a3b12;
-	font-size: 12px;
-	line-height: 1.45;
+	padding: 1px 6px;
 }
 
 .wkr-check {
 	display: inline-flex;
 	align-items: center;
-	gap: 7px;
+	gap: 8px;
 	font-size: 13px;
+	color: var(--w-text);
 }
 
 .wkr-toggles {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px 22px;
-	margin: 4px 0 6px;
+	gap: 10px 24px;
+	margin: 4px 0 8px;
 	border: 0;
 	padding: 0;
 }
 
-/* ---------- keeleribad ---------- */
+.wkr-sep {
+	border: 0;
+	border-top: 1px solid var(--w-border);
+	margin: 8px 0 18px;
+}
+
+/* --- Segmentlüliti (keel, režiim) ------------------------------------ */
 
 .wkr-langbar {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	flex-wrap: wrap;
-	margin: 6px 0 12px;
-	padding-top: 12px;
-	border-top: 1px solid #e0e0e0;
+	margin: 4px 0 14px;
+	padding-top: 16px;
+	border-top: 1px solid var(--w-border);
 }
 
 .wkr-spacer {
@@ -117,43 +534,50 @@
 	display: inline-flex;
 	gap: 2px;
 	padding: 3px;
-	border-radius: 6px;
-	background: #f0f0f1;
+	border-radius: var(--w-radius-sm);
+	background: var(--w-bg);
+	border: 1px solid var(--w-border);
 }
 
 .wkr-switch button {
 	border: 0;
 	background: transparent;
-	color: #646970;
-	font-size: 12px;
+	color: var(--w-muted);
+	font-size: 12.5px;
 	font-weight: 600;
-	padding: 5px 12px;
-	border-radius: 4px;
+	padding: 5px 13px;
+	border-radius: 6px;
 	cursor: pointer;
 }
 
+.wkr-switch button:hover {
+	color: var(--w-text);
+}
+
 .wkr-switch button[aria-pressed="true"] {
-	background: #fff;
-	color: #1d2327;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+	background: var(--w-card);
+	color: var(--w-primary);
+	box-shadow: 0 1px 2px rgba(16, 24, 40, 0.1);
 }
 
 .wkr-autonote {
-	margin: 0 0 12px;
-	padding: 8px 11px;
-	border-radius: 5px;
-	background: #eef3fb;
+	display: flex;
+	gap: 8px;
+	margin: 0 0 14px;
+	padding: 10px 12px;
+	border-radius: var(--w-radius-sm);
+	background: var(--w-primary-soft);
 	color: #1c4a80;
 	font-size: 12.5px;
 	line-height: 1.5;
 }
 
 .wkr-autonote.is-rough {
-	background: #fcf6e6;
-	color: #7a5a12;
+	background: var(--w-warn-soft);
+	color: var(--w-warn);
 }
 
-/* ---------- kuupäevavalija ---------- */
+/* --- Kuupäevavalija: E-esimene, 24 h --------------------------------- */
 
 .wkr-dt {
 	position: relative;
@@ -169,17 +593,17 @@
 
 .wkr-dtbtn {
 	flex: 0 0 auto;
-	width: 32px;
-	height: 30px;
-	border: 1px solid #8c8f94;
-	border-radius: 4px;
-	background: #f6f7f7;
+	width: 34px;
+	height: 34px;
+	border: 1px solid var(--w-border-strong);
+	border-radius: var(--w-radius-sm);
+	background: var(--w-card);
 	cursor: pointer;
 	line-height: 1;
 }
 
 .wkr-dtbtn:hover {
-	border-color: #2271b1;
+	border-color: var(--w-primary);
 }
 
 .wkr-dtpop {
@@ -187,19 +611,24 @@
 	top: calc(100% + 6px);
 	left: 0;
 	z-index: 100;
-	width: 250px;
-	padding: 10px;
-	border: 1px solid #c3c4c7;
-	border-radius: 6px;
-	background: #fff;
-	box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.45);
+	width: 258px;
+	padding: 12px;
+	border: 1px solid var(--w-border);
+	border-radius: var(--w-radius);
+	background: var(--w-card);
+	box-shadow: 0 12px 28px -10px rgba(16, 24, 40, 0.28);
+}
+
+.wkr-dtpop.up {
+	top: auto;
+	bottom: calc(100% + 6px);
 }
 
 .wkr-dtnav {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 6px;
+	margin-bottom: 8px;
 }
 
 .wkr-dtnav button {
@@ -207,18 +636,20 @@
 	background: none;
 	cursor: pointer;
 	font-size: 16px;
-	padding: 2px 8px;
-	border-radius: 4px;
-	color: #50575e;
+	padding: 2px 9px;
+	border-radius: 6px;
+	color: var(--w-muted);
 }
 
 .wkr-dtnav button:hover {
-	background: #f0f0f1;
+	background: var(--w-bg);
+	color: var(--w-text);
 }
 
 .wkr-dtmonth {
-	font-weight: 600;
+	font-weight: 650;
 	font-size: 13px;
+	color: var(--w-text);
 }
 
 .wkr-dtgrid {
@@ -230,76 +661,92 @@
 .wkr-dtdow {
 	text-align: center;
 	font-size: 10px;
-	color: #787c82;
-	padding: 2px 0;
+	font-weight: 600;
+	color: var(--w-faint);
+	padding: 2px 0 4px;
 }
 
 .wkr-dtgrid button {
 	border: 0;
 	background: none;
-	padding: 5px 0;
-	border-radius: 4px;
+	padding: 6px 0;
+	border-radius: 6px;
 	cursor: pointer;
 	font-size: 12px;
+	color: var(--w-text);
 	font-variant-numeric: tabular-nums;
 }
 
 .wkr-dtgrid button:hover {
-	background: #f0f0f1;
+	background: var(--w-bg);
 }
 
 .wkr-dtgrid button.is-out {
-	color: #a7aaad;
+	color: var(--w-faint);
 }
 
 .wkr-dtgrid button.is-today {
-	box-shadow: inset 0 0 0 1px #2271b1;
+	box-shadow: inset 0 0 0 1px var(--w-primary);
 }
 
 .wkr-dtgrid button.is-sel {
-	background: #2271b1;
+	background: var(--w-primary);
 	color: #fff;
-	font-weight: 600;
+	font-weight: 650;
 }
 
 .wkr-dttime {
 	display: flex;
 	align-items: center;
-	gap: 5px;
-	margin-top: 9px;
-	padding-top: 9px;
-	border-top: 1px solid #e0e0e0;
+	gap: 6px;
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px solid var(--w-border);
 }
 
 .wkr-dttime select {
-	min-width: 62px;
+	min-width: 66px;
 }
 
 .wkr-dtfoot {
 	display: flex;
 	justify-content: flex-end;
 	gap: 6px;
-	margin-top: 9px;
+	margin-top: 10px;
 }
 
-/* ---------- eelvaade ---------- */
+/* --- Eelvaade -------------------------------------------------------- */
 
 .wkr-preview-tools {
 	display: flex;
 	align-items: center;
 	gap: 12px;
 	flex-wrap: wrap;
-	margin-bottom: 10px;
+	margin-bottom: 12px;
+}
+
+.wkr-preview-lang {
+	display: inline-block;
+	padding: 5px 13px;
+	border-radius: 20px;
+	background: var(--w-primary-soft);
+	font-size: 12px;
+	font-weight: 650;
+	color: var(--w-primary);
 }
 
 .wkr-preview-stage {
-	padding: 16px;
-	border-radius: 6px;
-	background: #f0f0f1;
+	padding: 22px;
+	border-radius: var(--w-radius);
+	background: var(--w-bg);
+	border: 1px solid var(--w-border);
 }
 
 .wkr-preview-stage .wkr-slot {
 	position: static;
+	border-radius: var(--w-radius-sm);
+	overflow: hidden;
+	box-shadow: 0 2px 8px -2px rgba(16, 24, 40, 0.18);
 }
 
 .wkr-preview-stage .wkr-mini-note {
@@ -311,21 +758,46 @@
 	margin-top: 2px;
 }
 
-/* ---------- WooCommerce'i kupong ---------- */
+/* --- Olekusildid ----------------------------------------------------- */
+
+.wkr-pill {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 20px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.7;
+	background: #eef0f5;
+	color: var(--w-muted);
+	vertical-align: middle;
+}
+
+.wkr-pill--live { background: var(--w-ok-soft); color: var(--w-ok); }
+.wkr-pill--upcoming { background: var(--w-warn-soft); color: var(--w-warn); }
+.wkr-pill--ended,
+.wkr-pill--off { background: #eef0f5; color: var(--w-muted); }
+
+.wkr-when {
+	font-variant-numeric: tabular-nums;
+}
+
+.wkr-tz {
+	color: var(--w-faint);
+	font-size: 11px;
+}
+
+/* --- WooCommerce'i kupong -------------------------------------------- */
 
 .wkr-woo-status {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 12px;
 	flex-wrap: wrap;
 	margin: 0 0 16px;
-	padding-bottom: 14px;
-	border-bottom: 1px solid #e0e0e0;
-}
-
-.wkr-woo-fields .wkr-check {
-	display: flex;
-	margin-bottom: 4px;
+	padding: 12px 14px;
+	border-radius: var(--w-radius-sm);
+	background: var(--w-bg);
+	border: 1px solid var(--w-border);
 }
 
 .wkr-woo-status .spinner {
@@ -340,31 +812,23 @@
 
 .wkr-takeover {
 	margin: 0 0 16px;
-	padding-bottom: 14px;
-	border-bottom: 1px solid #e0e0e0;
+	padding: 12px 14px;
+	border-radius: var(--w-radius-sm);
+	background: var(--w-warn-soft);
+	border: 1px solid #f0dcb4;
 }
 
 .wkr-takeover .wkr-warn {
-	margin-bottom: 8px;
+	margin: 0 0 8px;
+	padding: 0;
+	background: none;
 }
 
-.wkr-preview-lang {
-	display: inline-block;
-	padding: 4px 12px;
-	border-radius: 6px;
-	background: #f0f0f1;
-	font-size: 12px;
-	font-weight: 600;
-	color: #1d2327;
+.wkr-woo-fields .wkr-check {
+	display: flex;
+	margin-bottom: 5px;
 }
 
-.wkr-sep {
-	border: 0;
-	border-top: 1px solid #e0e0e0;
-	margin: 6px 0 16px;
-}
-
-/* WooCommerce'i select2 väljad tahavad natuke ruumi. */
 .wkr-items .select2-container {
 	margin-top: 2px;
 }
@@ -373,51 +837,18 @@
 	margin-bottom: 6px;
 }
 
-/* ---------- kloonimine ---------- */
+/* --- Kloonimine ja uuendamine ---------------------------------------- */
 
 .wkr-clone-row {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 7px;
 	align-items: flex-start;
 }
 
 .wkr-clone-row .wkr-hint {
 	margin-top: 0;
 }
-
-/* ---------- olekusildid ---------- */
-
-.wkr-pill {
-	display: inline-block;
-	padding: 2px 8px;
-	border-radius: 4px;
-	font-size: 11px;
-	font-weight: 600;
-	line-height: 1.6;
-}
-
-.wkr-pill--live {
-	background: #e2f3ea;
-	color: #17835a;
-}
-
-.wkr-pill--upcoming {
-	background: #f8efdc;
-	color: #8a5f10;
-}
-
-.wkr-pill--ended,
-.wkr-pill--off {
-	background: #f0f0f1;
-	color: #646970;
-}
-
-.wkr-when {
-	font-variant-numeric: tabular-nums;
-}
-
-/* ---------- uuendusnupp seadete lehel ---------- */
 
 .wkr-update-box {
 	display: inline-flex;
@@ -428,73 +859,97 @@
 }
 
 .wkr-update-status {
-	color: #646970;
+	color: var(--w-muted);
 	font-size: 12.5px;
 }
 
-.wkr-tz {
-	color: #787c82;
-	font-size: 11px;
+body.wkr-app .wkr-actions {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	margin: 18px 0 0;
 }
 
-/* ---------- kalender ---------- */
+body.wkr-app .wkr-actions .button {
+	margin: 0;
+}
+
+/* --- Kalender -------------------------------------------------------- */
+
+.wkr-cal-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.wkr-cal-nav {
+	display: inline-flex;
+	gap: 6px;
+}
 
 .wkr-cal {
 	display: grid;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
 	gap: 1px;
-	background: #dcdcde;
-	border: 1px solid #dcdcde;
-	border-radius: 4px;
+	background: var(--w-border);
+	border: 1px solid var(--w-border);
+	border-radius: var(--w-radius);
 	overflow: hidden;
+	box-shadow: var(--w-shadow);
 	margin-bottom: 28px;
 }
 
 .wkr-cal-dow {
-	background: #f6f7f7;
-	padding: 6px 2px;
+	background: var(--w-card);
+	padding: 10px 2px;
 	text-align: center;
 	font-size: 11px;
-	font-weight: 600;
-	color: #646970;
+	font-weight: 650;
+	color: var(--w-faint);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
 }
 
 .wkr-cal-day {
-	background: #fff;
-	min-height: 84px;
-	padding: 5px 6px 7px;
+	background: var(--w-card);
+	min-height: 92px;
+	padding: 7px 8px 9px;
 	display: flex;
 	flex-direction: column;
-	gap: 3px;
+	gap: 4px;
 }
 
 .wkr-cal-day.is-out {
-	background: #fafafa;
+	background: #fafbfd;
 }
 
 .wkr-cal-num {
 	font-size: 11px;
-	color: #646970;
+	font-weight: 600;
+	color: var(--w-faint);
 	font-variant-numeric: tabular-nums;
 }
 
 .wkr-cal-day.is-today .wkr-cal-num {
 	align-self: flex-start;
-	background: #1d2327;
+	background: var(--w-primary);
 	color: #fff;
-	border-radius: 3px;
-	padding: 0 4px;
+	border-radius: 20px;
+	padding: 1px 7px;
 }
 
 .wkr-cal-bar {
 	display: block;
-	padding: 2px 6px;
-	border-left: 3px solid var(--wkr-bar, #2271b1);
-	border-radius: 2px;
-	background: #f6f7f7;
-	color: #1d2327;
+	padding: 3px 8px;
+	border-left: 3px solid var(--w-bar, var(--w-primary));
+	border-radius: 0 6px 6px 0;
+	background: var(--w-bg);
+	color: var(--w-text);
 	font-size: 11px;
-	line-height: 1.4;
+	font-weight: 550;
+	line-height: 1.45;
 	text-decoration: none;
 	white-space: nowrap;
 	overflow: hidden;
@@ -502,14 +957,112 @@
 }
 
 .wkr-cal-bar:hover {
-	background: #eef3fb;
+	background: var(--w-primary-soft);
+	color: var(--w-primary);
 }
 
 .wkr-cal-bar.is-dim {
-	opacity: 0.5;
+	opacity: 0.45;
+}
+
+/* --- Tabelid --------------------------------------------------------- */
+
+body.wkr-app .widefat {
+	border: 1px solid var(--w-border);
+	border-radius: var(--w-radius);
+	border-collapse: separate;
+	border-spacing: 0;
+	overflow: hidden;
+	box-shadow: var(--w-shadow);
+	background: var(--w-card);
+}
+
+body.wkr-app .widefat thead th,
+body.wkr-app .widefat thead td {
+	background: #fbfcfe;
+	border-bottom: 1px solid var(--w-border);
+	font-size: 11px;
+	font-weight: 650;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--w-faint);
+	padding: 12px 14px;
+}
+
+body.wkr-app .widefat tbody td,
+body.wkr-app .widefat tbody th {
+	border-bottom: 1px solid #f0f2f6;
+	padding: 13px 14px;
+	vertical-align: middle;
+	color: var(--w-text);
+}
+
+body.wkr-app .widefat tbody tr:last-child td,
+body.wkr-app .widefat tbody tr:last-child th {
+	border-bottom: 0;
+}
+
+body.wkr-app .widefat tbody tr:hover {
+	background: #fafbfd;
+}
+
+body.wkr-app .widefat .striped > tbody > :nth-child(odd),
+body.wkr-app .striped > tbody > :nth-child(odd) {
+	background: transparent;
+}
+
+body.wkr-app .widefat .row-title,
+body.wkr-app .widefat strong a {
+	font-weight: 650;
+	color: var(--w-text);
+}
+
+body.wkr-app .widefat a {
+	color: var(--w-primary);
+}
+
+body.wkr-app .row-actions {
+	color: var(--w-faint);
+	font-size: 12px;
+	padding-top: 3px;
 }
 
 .wkr-sched td,
 .wkr-sched th {
 	vertical-align: middle;
+}
+
+body.wkr-app code {
+	background: var(--w-bg);
+	border-radius: 4px;
+	padding: 2px 7px;
+	font-size: 12px;
+	color: var(--w-text);
+}
+
+body.wkr-app .tablenav,
+body.wkr-app .subsubsub {
+	color: var(--w-muted);
+}
+
+body.wkr-app .subsubsub a {
+	color: var(--w-primary);
+}
+
+/* --- Kitsas ekraan --------------------------------------------------- */
+
+@media (max-width: 782px) {
+	body.wkr-app #wpbody-content {
+		padding: 0 14px 32px;
+	}
+
+	.wkr-appbar {
+		padding: 10px 14px;
+		gap: 12px;
+		position: static;
+	}
+
+	.wkr-appbar .wkr-new {
+		margin-left: 0;
+	}
 }
