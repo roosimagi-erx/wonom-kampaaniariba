@@ -331,7 +331,7 @@ class WKR_Meta {
 		</p>
 
 		<div class="wkr-woo-fields" <?php echo 'manage' === $mode ? '' : 'hidden'; ?>>
-			<div class="wkr-grid wkr-grid--3">
+			<div class="wkr-grid wkr-grid--2">
 				<p class="wkr-field">
 					<label for="wkr_wc_type"><?php esc_html_e( 'Soodustuse liik', 'wonom-kampaaniariba' ); ?></label>
 					<select id="wkr_wc_type" name="wkr[wc_type]">
@@ -344,15 +344,7 @@ class WKR_Meta {
 					<input type="number" id="wkr_wc_amount" name="wkr[wc_amount]" min="0" step="0.01"
 						value="<?php echo esc_attr( wkr_get( $post->ID, 'wc_amount' ) ); ?>">
 				</p>
-				<p class="wkr-field">
-					<label for="wkr_wc_min"><?php esc_html_e( 'Vähim ostukorvi summa', 'wonom-kampaaniariba' ); ?></label>
-					<input type="number" id="wkr_wc_min" name="wkr[wc_min]" min="0" step="0.01"
-						value="<?php echo esc_attr( wkr_get( $post->ID, 'wc_min' ) ); ?>">
-					<span class="wkr-hint"><?php esc_html_e( '0 = piirangut ei ole', 'wonom-kampaaniariba' ); ?></span>
-				</p>
-			</div>
 
-			<div class="wkr-grid wkr-grid--3">
 				<p class="wkr-field">
 					<label for="wkr_wc_limit"><?php esc_html_e( 'Kasutuskordi kokku', 'wonom-kampaaniariba' ); ?></label>
 					<input type="number" id="wkr_wc_limit" name="wkr[wc_limit]" min="0" step="1"
@@ -365,6 +357,13 @@ class WKR_Meta {
 						value="<?php echo esc_attr( wkr_get( $post->ID, 'wc_limit_user' ) ); ?>">
 					<span class="wkr-hint"><?php esc_html_e( '0 = piiramatu', 'wonom-kampaaniariba' ); ?></span>
 				</p>
+
+				<p class="wkr-field">
+					<label for="wkr_wc_min"><?php esc_html_e( 'Vähim ostukorvi summa', 'wonom-kampaaniariba' ); ?></label>
+					<input type="number" id="wkr_wc_min" name="wkr[wc_min]" min="0" step="0.01"
+						value="<?php echo esc_attr( wkr_get( $post->ID, 'wc_min' ) ); ?>">
+					<span class="wkr-hint"><?php esc_html_e( '0 = piirangut ei ole', 'wonom-kampaaniariba' ); ?></span>
+				</p>
 				<p class="wkr-field">
 					<label><?php esc_html_e( 'Lisavalikud', 'wonom-kampaaniariba' ); ?></label>
 					<label class="wkr-check">
@@ -376,6 +375,7 @@ class WKR_Meta {
 						<?php esc_html_e( 'Annab tasuta tarne', 'wonom-kampaaniariba' ); ?>
 					</label>
 				</p>
+			</div>
 			</div>
 
 			<p class="wkr-field">

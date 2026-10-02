@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.14.2
+Stable tag: 1.14.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,10 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.14.3 =
+* Parandus: „WooCommerce kupong" kaardis olid kupongivaljad kolmes ja tootevalikud kahes veerus, nii et servad hupelsid 334 piksli vorra. Kogu kaart kaib nuud uhe kaheveerulise ruudustiku jargi.
+* Kupongivaljad on paarides: soodustuse liik ja vaartus, kasutuskorrad kokku ja kliendi kohta, vahim ostukorvi summa ja lisavalikud.
 
 = 1.14.2 =
 * Parandus: kampaania „Kujundus" kaardis olid 2- ja 3-veerulised read labisegi, mistottu valjade servad hupelsid kaardi sees 231 piksli vorra. Koik valjad kaivad nuud uhe ja sama kolmeveerulise ruudustiku jargi.
