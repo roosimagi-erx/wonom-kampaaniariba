@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.14.0
+Stable tag: 1.14.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,10 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.14.1 =
+* Parandus: seadete lehel hupeldas kaardi serv sisse ja valja, sest kirjeldused olid pealkirjast ja tabelist kitsamad. Iga plokk on nuud uks paris kaart ja sisu laius ei liiguta enam serva.
+* Esimene plokk sai pealkirja „Riba vaikeseaded" ja korraliku ulemise aare.
 
 = 1.14.0 =
 * Uus admin-kujundus, sama disainikeelega mis Wonom Feedil: ulemine riba navigatsiooniga, kaardid, pehmed nurgad ja uhtne varvipalett.

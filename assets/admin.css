@@ -352,43 +352,48 @@ body.wkr-app #titlediv #title:focus {
 	box-shadow: var(--w-ring);
 }
 
-/* Seadete leht: iga h2 + form-table paar on oma kaart. */
-body.wkr-app .wkr-wrap form > h2 {
-	margin: 26px 0 0;
-	padding: 16px 20px 0;
-	font-size: 15px;
-	font-weight: 650;
-	color: var(--w-text);
+/* Seadete leht: iga plokk on üks kaart.
+   Kaardi serva hoiab ainult .wkr-card — sisu laiused ei tohi seda liigutada,
+   muidu hüppab serv iga lõigu juures sisse ja välja. */
+.wkr-card {
 	background: var(--w-card);
 	border: 1px solid var(--w-border);
-	border-bottom: 0;
-	border-radius: var(--w-radius) var(--w-radius) 0 0;
+	border-radius: var(--w-radius);
 	box-shadow: var(--w-shadow);
+	padding: 2px 22px 16px;
+	margin: 0 0 18px;
 	max-width: 1080px;
 	box-sizing: border-box;
 }
 
-body.wkr-app .wkr-wrap form > h2 + .description {
-	margin: 0;
-	padding: 6px 20px 0;
-	background: var(--w-card);
-	border-left: 1px solid var(--w-border);
-	border-right: 1px solid var(--w-border);
+.wkr-card > h2 {
+	margin: 18px 0 10px;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 650;
+	color: var(--w-text);
+}
+
+.wkr-card > .description,
+.wkr-card > p {
+	margin: 0 0 12px;
+	max-width: 76ch;
 	color: var(--w-muted);
-	max-width: 1080px;
-	box-sizing: border-box;
+	font-size: 12.5px;
+	line-height: 1.6;
+}
+
+.wkr-card > p code {
+	font-size: 12px;
 }
 
 body.wkr-app .wkr-wrap .form-table {
 	margin: 0;
-	padding: 4px 20px 10px;
-	background: var(--w-card);
-	border: 1px solid var(--w-border);
-	border-top: 0;
-	border-radius: 0 0 var(--w-radius) var(--w-radius);
-	box-shadow: var(--w-shadow);
-	max-width: 1080px;
-	box-sizing: border-box;
+	padding: 0;
+	background: none;
+	border: 0;
+	box-shadow: none;
+	width: 100%;
 }
 
 body.wkr-app .wkr-wrap .form-table tr {

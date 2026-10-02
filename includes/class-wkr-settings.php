@@ -268,6 +268,9 @@ class WKR_Settings {
 			<form method="post" action="options.php">
 				<?php settings_fields( 'wkr_settings' ); ?>
 
+				<div class="wkr-card">
+				<h2><?php esc_html_e( 'Riba vaikeseaded', 'wonom-kampaaniariba' ); ?></h2>
+
 				<table class="form-table" role="presentation">
 					<tr>
 						<th scope="row">
@@ -304,8 +307,11 @@ class WKR_Settings {
 					</tr>
 				</table>
 
+				</div>
+
+				<div class="wkr-card">
 				<h2><?php esc_html_e( 'Vahemälu', 'wonom-kampaaniariba' ); ?></h2>
-				<p class="description" style="max-width:640px">
+				<p class="description">
 					<?php esc_html_e( 'Riba kirjutatakse lehe HTML-i sisse, seega vahemällu salvestatud leht hoiab riba sellisena, nagu see salvestamise hetkel oli. Plugin tühjendab vahemälu kampaania salvestamisel ning paneb ajastatud tühjenduse kampaania algus- ja lõpuajale.', 'wonom-kampaaniariba' ); ?>
 				</p>
 
@@ -337,7 +343,7 @@ class WKR_Settings {
 								</p>
 							<?php endif; ?>
 							<?php if ( class_exists( '\FlyingPress\Purge' ) || function_exists( 'rocket_clean_domain' ) || has_action( 'litespeed_purge_all' ) ) : ?>
-								<p class="wkr-warn" style="max-width:640px">
+								<p class="wkr-warn">
 									<?php esc_html_e( 'Kui su kiirendusplugin viivitab JavaScripti kuni külastaja esimese tegevuseni (FlyingPressis „Delay All JavaScript”), lisa väljajätmiste hulka märksõna:', 'wonom-kampaaniariba' ); ?>
 									<code>wkr-restore</code>
 									<br>
@@ -369,7 +375,7 @@ class WKR_Settings {
 									<?php esc_html_e( 'Ootan esimest cron-käivitust. Kontrolli seda lehte paari minuti pärast uuesti.', 'wonom-kampaaniariba' ); ?>
 								</p>
 							<?php else : ?>
-								<p class="wkr-warn" style="max-width:640px">
+								<p class="wkr-warn">
 									<?php
 									if ( 'stale' === $cron['state'] ) {
 										printf(
@@ -412,10 +418,12 @@ class WKR_Settings {
 						</td>
 					</tr>
 				</table>
+				</div>
 
 				<?php if ( WKR_Coupon::woo_active() ) : ?>
+					<div class="wkr-card">
 					<h2><?php esc_html_e( 'Kupongide püsivälistused', 'wonom-kampaaniariba' ); ?></h2>
-					<p class="description" style="max-width:640px">
+					<p class="description">
 						<?php esc_html_e( 'Need tooted ja kategooriad lisatakse iga plugina hallatava kupongi välistuste hulka. Nii ei pea kinkekaarte iga kampaania juures uuesti meelde tuletama. Kehtib ainult kampaaniatele, kus toote- ja kategooriapiiranguid hallatakse plugina alt.', 'wonom-kampaaniariba' ); ?>
 					</p>
 
@@ -473,10 +481,12 @@ class WKR_Settings {
 							</td>
 						</tr>
 					</table>
+					</div>
 				<?php endif; ?>
 
+				<div class="wkr-card">
 				<h2><?php esc_html_e( 'Automaatsed uuendused', 'wonom-kampaaniariba' ); ?></h2>
-				<p class="description" style="max-width:640px">
+				<p class="description">
 					<?php esc_html_e( 'Kui allikas on määratud, ilmub uus versioon Pluginad-lehele tavalise uuendusteatena ja „Uuenda kohe” töötab. ZIP-i ei pea enam käsitsi üles laadima.', 'wonom-kampaaniariba' ); ?>
 				</p>
 
@@ -583,6 +593,7 @@ class WKR_Settings {
 						</td>
 					</tr>
 				</table>
+				</div>
 
 				<?php submit_button(); ?>
 			</form>
@@ -600,6 +611,7 @@ class WKR_Settings {
 				</form>
 			</p>
 
+			<div class="wkr-card">
 			<h2><?php esc_html_e( 'Kuidas riba lehele saab', 'wonom-kampaaniariba' ); ?></h2>
 			<p>
 				<?php esc_html_e( 'Riba ilmub automaatselt: päisesse haagi wp_body_open kaudu, jalusesse wp_footer kaudu. Kui teema wp_body_open haaki ei kasuta, saad riba paigutada käsitsi lühikoodiga:', 'wonom-kampaaniariba' ); ?>
@@ -608,6 +620,7 @@ class WKR_Settings {
 			<p class="description">
 				<?php esc_html_e( 'Või mallifailis: echo do_shortcode( \'[wonom_banner]\' );', 'wonom-kampaaniariba' ); ?>
 			</p>
+			</div>
 		</div>
 		<?php
 		// Vajalik siis, kui server küsib uuendamiseks failiõigusi (FTP).
