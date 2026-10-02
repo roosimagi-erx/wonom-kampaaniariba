@@ -409,9 +409,6 @@ class WKR_Meta {
 						<?php self::product_select( 'wkr_items[products_ex][]', 'wkr_wc_products_ex', wkr_get( $post->ID, 'wc_products_ex' ) ); ?>
 						<span class="wkr-hint"><?php esc_html_e( 'Siia lisatakse alati ka seadetes määratud püsivälistused, näiteks kinkekaardid.', 'wonom-kampaaniariba' ); ?></span>
 					</p>
-				</div>
-
-				<div class="wkr-grid wkr-grid--2">
 					<p class="wkr-field">
 						<label for="wkr_wc_cats"><?php esc_html_e( 'Tootekategooriad', 'wonom-kampaaniariba' ); ?></label>
 						<?php self::category_select( 'wkr_items[cats][]', 'wkr_wc_cats', wkr_get( $post->ID, 'wc_cats' ) ); ?>
@@ -420,6 +417,7 @@ class WKR_Meta {
 					<p class="wkr-field">
 						<label for="wkr_wc_cats_ex"><?php esc_html_e( 'Välista kategooriad', 'wonom-kampaaniariba' ); ?></label>
 						<?php self::category_select( 'wkr_items[cats_ex][]', 'wkr_wc_cats_ex', wkr_get( $post->ID, 'wc_cats_ex' ) ); ?>
+						<span class="wkr-hint"><?php esc_html_e( 'Siia lisatakse alati ka seadetes määratud püsivälistused.', 'wonom-kampaaniariba' ); ?></span>
 					</p>
 				</div>
 
@@ -548,9 +546,7 @@ class WKR_Meta {
 						data-wkr="<?php echo esc_attr( $key ); ?>">
 				</p>
 			<?php endforeach; ?>
-		</div>
 
-		<div class="wkr-grid wkr-grid--3">
 			<p class="wkr-field">
 				<label for="wkr_font"><?php esc_html_e( 'Font', 'wonom-kampaaniariba' ); ?></label>
 				<select id="wkr_font" name="wkr[font]" data-wkr="font">
@@ -575,9 +571,7 @@ class WKR_Meta {
 					<?php esc_html_e( 'Nii kõrge kiht katab tõenäoliselt ostukorvi paneeli ja modaalaknad.', 'wonom-kampaaniariba' ); ?>
 				</span>
 			</p>
-		</div>
 
-		<div class="wkr-grid wkr-grid--2">
 			<p class="wkr-field">
 				<label for="wkr_position"><?php esc_html_e( 'Asukoht', 'wonom-kampaaniariba' ); ?></label>
 				<select id="wkr_position" name="wkr[position]" data-wkr="position">
@@ -593,10 +587,54 @@ class WKR_Meta {
 					<option value="floating" <?php selected( wkr_get( $post->ID, 'style' ), 'floating' ); ?>><?php esc_html_e( 'Ujuv kaart servadega', 'wonom-kampaaniariba' ); ?></option>
 				</select>
 			</p>
-		</div>
-
-		<div class="wkr-grid wkr-grid--2">
 			<p class="wkr-field">
+				<label for="wkr_close_pos"><?php esc_html_e( 'Sulgemisnupu asukoht', 'wonom-kampaaniariba' ); ?></label>
+				<select id="wkr_close_pos" name="wkr[close_pos]" data-wkr="close_pos">
+					<option value="right" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'right' ); ?>><?php esc_html_e( 'Paremas servas', 'wonom-kampaaniariba' ); ?></option>
+					<option value="left" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'left' ); ?>><?php esc_html_e( 'Vasakus servas', 'wonom-kampaaniariba' ); ?></option>
+					<option value="top-right" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'top-right' ); ?>><?php esc_html_e( 'Paremas ülanurgas', 'wonom-kampaaniariba' ); ?></option>
+					<option value="top-left" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'top-left' ); ?>><?php esc_html_e( 'Vasakus ülanurgas', 'wonom-kampaaniariba' ); ?></option>
+				</select>
+				<span class="wkr-hint"><?php esc_html_e( 'Teemade „keri üles” nupp ja vestlusmull istuvad tavaliselt paremas alanurgas. Kui nupp jääb nende taha, too see vasakusse serva või ülanurka.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+
+			<p class="wkr-field">
+				<label for="wkr_close_offset"><?php esc_html_e( 'Nupu kaugus servast (px)', 'wonom-kampaaniariba' ); ?></label>
+				<input type="number" id="wkr_close_offset" name="wkr[close_offset]" min="0" max="300" step="1"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'close_offset' ) ); ?>" data-wkr="close_offset">
+				<span class="wkr-hint"><?php esc_html_e( 'Riba külgpolster arvestab sellega, nii et tekst jääb nupust alati eemale. Vaikimisi 8.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+			<p class="wkr-field">
+				<label for="wkr_close_size"><?php esc_html_e( 'Sulgemisnupu ✕ suurus (px)', 'wonom-kampaaniariba' ); ?></label>
+				<input type="number" id="wkr_close_size" name="wkr[close_size]" min="8" max="60" step="0.5"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'close_size' ) ); ?>" data-wkr="close_size">
+				<span class="wkr-hint"><?php esc_html_e( 'Vaikimisi 22.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+			<p class="wkr-field">
+				<label for="wkr_expand_size"><?php esc_html_e( 'Avamisnoole ⌄ suurus (px)', 'wonom-kampaaniariba' ); ?></label>
+				<input type="number" id="wkr_expand_size" name="wkr[expand_size]" min="8" max="60" step="0.5"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'expand_size' ) ); ?>" data-wkr="expand_size">
+				<span class="wkr-hint"><?php esc_html_e( 'Nool kokkukäinud ribal, millega klient pakkumise tagasi avab. Vaikimisi 22.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+
+			<p class="wkr-field">
+				<label for="wkr_float_btn"><?php esc_html_e( 'Teema „keri üles” nupp', 'wonom-kampaaniariba' ); ?></label>
+				<select id="wkr_float_btn" name="wkr[float_btn]">
+					<option value="lift" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'lift' ); ?>><?php esc_html_e( 'Tõsta riba kohale', 'wonom-kampaaniariba' ); ?></option>
+					<option value="hide" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'hide' ); ?>><?php esc_html_e( 'Peida, kuni riba on ekraanil', 'wonom-kampaaniariba' ); ?></option>
+					<option value="behind" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'behind' ); ?>><?php esc_html_e( 'Jäta riba taha', 'wonom-kampaaniariba' ); ?></option>
+					<option value="none" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'none' ); ?>><?php esc_html_e( 'Ära puutu', 'wonom-kampaaniariba' ); ?></option>
+				</select>
+				<span class="wkr-hint"><?php esc_html_e( 'Puudutab ainult jaluse riba. Nupp saab oma koha tagasi, kui riba kaob.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+			<p class="wkr-field is-wide">
+				<label for="wkr_float_sel"><?php esc_html_e( 'Nupu CSS-valija', 'wonom-kampaaniariba' ); ?></label>
+				<input type="text" id="wkr_float_sel" name="wkr[float_sel]"
+					value="<?php echo esc_attr( wkr_get( $post->ID, 'float_sel' ) ); ?>" placeholder=".scrollToTop">
+				<span class="wkr-hint"><?php esc_html_e( 'Tühi = plugin tunneb levinumad ise ära, sealhulgas WoodMarti .scrollToTop. Täida ainult siis, kui su teema kasutab midagi muud.', 'wonom-kampaaniariba' ); ?></span>
+			</p>
+
+			<p class="wkr-field is-wide">
 				<label><?php esc_html_e( 'Kleepuv riba ja teema alumine menüü', 'wonom-kampaaniariba' ); ?></label>
 				<label class="wkr-check">
 					<input type="checkbox" name="wkr[avoid_bottom]" value="1" <?php checked( wkr_get( $post->ID, 'avoid_bottom' ), 1 ); ?>>
@@ -609,59 +647,6 @@ class WKR_Meta {
 				<input type="number" id="wkr_bottom_offset" name="wkr[bottom_offset]" min="0" max="400" step="1"
 					value="<?php echo esc_attr( wkr_get( $post->ID, 'bottom_offset' ) ); ?>">
 				<span class="wkr-hint"><?php esc_html_e( 'Liidetakse automaatsele mõõtmisele. Kasuta siis, kui riba jääb ikka millegi taha.', 'wonom-kampaaniariba' ); ?></span>
-			</p>
-		</div>
-
-		<div class="wkr-grid wkr-grid--2">
-			<p class="wkr-field">
-				<label for="wkr_float_btn"><?php esc_html_e( 'Teema „keri üles” nupp', 'wonom-kampaaniariba' ); ?></label>
-				<select id="wkr_float_btn" name="wkr[float_btn]">
-					<option value="lift" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'lift' ); ?>><?php esc_html_e( 'Tõsta riba kohale', 'wonom-kampaaniariba' ); ?></option>
-					<option value="hide" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'hide' ); ?>><?php esc_html_e( 'Peida, kuni riba on ekraanil', 'wonom-kampaaniariba' ); ?></option>
-					<option value="behind" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'behind' ); ?>><?php esc_html_e( 'Jäta riba taha', 'wonom-kampaaniariba' ); ?></option>
-					<option value="none" <?php selected( wkr_get( $post->ID, 'float_btn' ), 'none' ); ?>><?php esc_html_e( 'Ära puutu', 'wonom-kampaaniariba' ); ?></option>
-				</select>
-				<span class="wkr-hint"><?php esc_html_e( 'Puudutab ainult jaluse riba. Nupp saab oma koha tagasi, kui riba kaob.', 'wonom-kampaaniariba' ); ?></span>
-			</p>
-			<p class="wkr-field">
-				<label for="wkr_float_sel"><?php esc_html_e( 'Nupu CSS-valija', 'wonom-kampaaniariba' ); ?></label>
-				<input type="text" id="wkr_float_sel" name="wkr[float_sel]"
-					value="<?php echo esc_attr( wkr_get( $post->ID, 'float_sel' ) ); ?>" placeholder=".scrollToTop">
-				<span class="wkr-hint"><?php esc_html_e( 'Tühi = plugin tunneb levinumad ise ära, sealhulgas WoodMarti .scrollToTop. Täida ainult siis, kui su teema kasutab midagi muud.', 'wonom-kampaaniariba' ); ?></span>
-			</p>
-		</div>
-
-		<div class="wkr-grid wkr-grid--2">
-			<p class="wkr-field">
-				<label for="wkr_close_pos"><?php esc_html_e( 'Sulgemisnupu asukoht', 'wonom-kampaaniariba' ); ?></label>
-				<select id="wkr_close_pos" name="wkr[close_pos]" data-wkr="close_pos">
-					<option value="right" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'right' ); ?>><?php esc_html_e( 'Paremas servas', 'wonom-kampaaniariba' ); ?></option>
-					<option value="left" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'left' ); ?>><?php esc_html_e( 'Vasakus servas', 'wonom-kampaaniariba' ); ?></option>
-					<option value="top-right" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'top-right' ); ?>><?php esc_html_e( 'Paremas ülanurgas', 'wonom-kampaaniariba' ); ?></option>
-					<option value="top-left" <?php selected( wkr_get( $post->ID, 'close_pos' ), 'top-left' ); ?>><?php esc_html_e( 'Vasakus ülanurgas', 'wonom-kampaaniariba' ); ?></option>
-				</select>
-				<span class="wkr-hint"><?php esc_html_e( 'Teemade „keri üles” nupp ja vestlusmull istuvad tavaliselt paremas alanurgas. Kui nupp jääb nende taha, too see vasakusse serva või ülanurka.', 'wonom-kampaaniariba' ); ?></span>
-			</p>
-			<p class="wkr-field">
-				<label for="wkr_close_offset"><?php esc_html_e( 'Nupu kaugus servast (px)', 'wonom-kampaaniariba' ); ?></label>
-				<input type="number" id="wkr_close_offset" name="wkr[close_offset]" min="0" max="300" step="1"
-					value="<?php echo esc_attr( wkr_get( $post->ID, 'close_offset' ) ); ?>" data-wkr="close_offset">
-				<span class="wkr-hint"><?php esc_html_e( 'Riba külgpolster arvestab sellega, nii et tekst jääb nupust alati eemale. Vaikimisi 8.', 'wonom-kampaaniariba' ); ?></span>
-			</p>
-		</div>
-
-		<div class="wkr-grid wkr-grid--2">
-			<p class="wkr-field">
-				<label for="wkr_close_size"><?php esc_html_e( 'Sulgemisnupu ✕ suurus (px)', 'wonom-kampaaniariba' ); ?></label>
-				<input type="number" id="wkr_close_size" name="wkr[close_size]" min="8" max="60" step="0.5"
-					value="<?php echo esc_attr( wkr_get( $post->ID, 'close_size' ) ); ?>" data-wkr="close_size">
-				<span class="wkr-hint"><?php esc_html_e( 'Vaikimisi 22.', 'wonom-kampaaniariba' ); ?></span>
-			</p>
-			<p class="wkr-field">
-				<label for="wkr_expand_size"><?php esc_html_e( 'Avamisnoole ⌄ suurus (px)', 'wonom-kampaaniariba' ); ?></label>
-				<input type="number" id="wkr_expand_size" name="wkr[expand_size]" min="8" max="60" step="0.5"
-					value="<?php echo esc_attr( wkr_get( $post->ID, 'expand_size' ) ); ?>" data-wkr="expand_size">
-				<span class="wkr-hint"><?php esc_html_e( 'Nool kokkukäinud ribal, millega klient pakkumise tagasi avab. Vaikimisi 22.', 'wonom-kampaaniariba' ); ?></span>
 			</p>
 		</div>
 

@@ -440,10 +440,24 @@ body.wkr-app .wkr-wrap h2:not(.wp-heading-inline) + p.description {
 	grid-template-columns: 1fr 1fr 1fr;
 }
 
+/* Laiem väli ühes ruudustikus: veerujooned jäävad samaks. */
+.wkr-grid > .is-wide {
+	grid-column: span 2;
+}
+
+.wkr-grid > .is-full {
+	grid-column: 1 / -1;
+}
+
 @media (max-width: 900px) {
 	.wkr-grid--2,
 	.wkr-grid--3 {
 		grid-template-columns: 1fr;
+	}
+
+	.wkr-grid > .is-wide,
+	.wkr-grid > .is-full {
+		grid-column: auto;
 	}
 }
 
