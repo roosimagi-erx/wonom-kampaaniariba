@@ -394,7 +394,6 @@ class WKR_Meta {
 					</label>
 				</p>
 			</div>
-			</div>
 
 			<p class="wkr-field">
 				<label class="wkr-check">

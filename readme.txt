@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.16.0
+Stable tag: 1.16.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,10 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.16.1 =
+* Parandus: kuupaeva- ja kellaajavalija ei tootanud. Uue kujunduse meta box'i reegel `overflow: hidden` loikas kalendriakna kaardi servas pooleks — kellaaja valikud ja nupp „Valmis" jaid tapselt sinna loigatud ossa ega olnud klikitavad. Umarad nurgad seda reeglit ei vaja, nii et see sai valja.
+* Parandus: kampaania muutmise ekraanil ilmus lehe keskele tekst „Aitah, et kasutad WordPressi" koos versiooninumbriga. Pohjus oli uleliigne `</div>` WooCommerce'i kupongi meta box'is, mis sulges WordPressi lehekonteineri liiga vara ja jattis jaluse sellest valja. Jalus on taas lehe lopus.
 
 = 1.16.0 =
 * Uus: kupongikaardil on nuud „Kasutuskordade loendur" plokk. See naitab, mitu korda koodi on kasutatud ja mis on piir, ning linnukesega „Nulli loendur selle salvestusega" saab arvestuse otsast peale alustada.

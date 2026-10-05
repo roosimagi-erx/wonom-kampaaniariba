@@ -306,17 +306,22 @@ body.wkr-app .notice-info { border-left-color: var(--w-primary); background: var
 
 /* --- Kaardid: meta box'id ja seadete plokid -------------------------- */
 
+/*
+ * NB! Siia ei tohi panna overflow: hidden. Ümarad nurgad ei vaja seda, sest
+ * päisel ei ole oma tausta — küll aga lõikaks see ära kuupäevavalija akna,
+ * mis on positsioneeritud kaardi servast välja.
+ */
 body.wkr-app .postbox {
 	background: var(--w-card);
 	border: 1px solid var(--w-border);
 	border-radius: var(--w-radius);
 	box-shadow: var(--w-shadow);
 	margin-bottom: 18px;
-	overflow: hidden;
 }
 
 body.wkr-app .postbox-header {
 	border-bottom: 1px solid var(--w-border);
+	border-radius: calc(var(--w-radius) - 1px) calc(var(--w-radius) - 1px) 0 0;
 }
 
 body.wkr-app .postbox-header h2,
