@@ -96,6 +96,62 @@ class WKR_Coupon {
 	}
 
 	/**
+	 * Kupongi kasutuskordade loendur nulli.
+	 *
+	 * WooCommerce hoiab kasutusarvu kahes kohas: `usage_count` ütleb, mitu
+	 * korda kupongi on kasutatud, ja iga `_used_by` rida ütleb, kes seda tegi.
+	 * Kliendipõhine piir loeb just neid ridu, nii et ainult loenduri nullimine
+	 * jätaks varem ostnud kliendid endiselt ukse taha.
+	 *
+	 * CRUD seda ei tee: `set_used_by()` ei jõua andmesalvestusse, sestap
+	 * kirjutame meta otse ja viskame WooCommerce'i vahemälu tühjaks.
+	 *
+	 * @param int $coupon_id Kupongi ID.
+	 * @return int Endine kasutuskordade arv.
+	 */
+	public static function reset_usage( $coupon_id ) {
+		$before = (int) get_post_meta( $coupon_id, 'usage_count', true );
+
+		update_post_meta( $coupon_id, 'usage_count', 0 );
+		delete_post_meta( $coupon_id, '_used_by' );
+
+		clean_post_cache( $coupon_id );
+
+		if ( is_callable( array( 'WC_Cache_Helper', 'invalidate_cache_group' ) ) ) {
+			WC_Cache_Helper::invalidate_cache_group( 'coupons' );
+		}
+
+		return $before;
+	}
+
+	/**
+	 * Kasutuskordade seis lühidalt, nii nagu see administraatorile paistab.
+	 *
+	 * @param int $coupon_id Kupongi ID.
+	 * @return string
+	 */
+	public static function usage_label( $coupon_id ) {
+		$coupon = new WC_Coupon( $coupon_id );
+		$limit  = (int) $coupon->get_usage_limit();
+		$used   = (int) $coupon->get_usage_count();
+
+		if ( $limit > 0 ) {
+			return sprintf(
+				/* translators: 1: usage count, 2: usage limit */
+				__( 'Seda kupongi on kasutatud %1$d korda, piir on %2$d.', 'wonom-kampaaniariba' ),
+				$used,
+				$limit
+			);
+		}
+
+		return sprintf(
+			/* translators: %d: usage count */
+			__( 'Seda kupongi on kasutatud %d korda, kasutuskordade piirangut ei ole.', 'wonom-kampaaniariba' ),
+			$used
+		);
+	}
+
+	/**
 	 * Hoiatus, kui kupongi kasutuskorrad on otsas.
 	 *
 	 * Korduvkasutatava koodi puhul on see kõige sagedasem põhjus, miks kupong
@@ -144,6 +200,7 @@ class WKR_Coupon {
 			'pill'          => 'off',
 			'label'         => __( 'Koodi pole sisestatud', 'wonom-kampaaniariba' ),
 			'note'          => '',
+			'usage'         => '',
 			'edit_url'      => '',
 			'takeover'      => false,
 			'takeover_text' => '',
@@ -164,6 +221,7 @@ class WKR_Coupon {
 
 		$out['edit_url'] = (string) get_edit_post_link( $existing, 'raw' );
 		$out['note']     = self::usage_note( $existing );
+		$out['usage']    = self::usage_label( $existing );
 		$owner           = self::owner_campaign( $existing );
 
 		if ( $existing === $owned || ( $owner && $owner === (int) $campaign_id ) ) {
@@ -258,6 +316,14 @@ class WKR_Coupon {
 				'coupon_id' => 0,
 			);
 		}
+
+		/*
+		 * Nullimise linnuke on ühekordne. Kustutame märke kohe, enne kui
+		 * ükski muu kontroll saab poole pealt välja hüpata — muidu jääks see
+		 * rippuma ja järgmine salvestus nulliks loenduri ootamatult.
+		 */
+		$reset = (bool) wkr_get( $campaign_id, 'wc_reset_usage' );
+		update_post_meta( $campaign_id, '_wkr_wc_reset_usage', 0 );
 
 		if ( ! self::woo_active() ) {
 			return array(
@@ -405,11 +471,11 @@ class WKR_Coupon {
 		// Ülevõtmise linnuke on ühekordne — järgmisel salvestusel pole seda vaja.
 		update_post_meta( $campaign_id, '_wkr_wc_takeover', 0 );
 
-		$message = '';
-		$level   = 'success';
+		$parts = array();
+		$level = 'success';
 
 		if ( $took_over_from ) {
-			$message = sprintf(
+			$parts[] = sprintf(
 				/* translators: 1: coupon code, 2: previous campaign title */
 				__( 'Kood „%1$s” liikus kampaanialt „%2$s” siia ja sai selle kampaania kuupäevad.', 'wonom-kampaaniariba' ),
 				$code,
@@ -417,13 +483,33 @@ class WKR_Coupon {
 			);
 		}
 
-		$usage = self::usage_note( $coupon_id );
+		/*
+		 * Nullimine käib pärast salvestust: salvestus kirjutab kupongi objekti
+		 * välja koos vana loenduriga ja kustutaks nullimise muidu ära.
+		 */
+		if ( $reset ) {
+			$before = self::reset_usage( $coupon_id );
 
-		// Kasutuspiiri hoiatus kaalub ülevõtmise rõõmusõnumi üles.
-		if ( $usage ) {
-			$message = $message ? $message . ' ' . $usage : $usage;
-			$level   = 'warning';
+			// Värskelt loodud kupongi juures ei ole millestki teatada.
+			if ( $before > 0 ) {
+				$parts[] = sprintf(
+					/* translators: 1: coupon code, 2: previous usage count */
+					__( 'Koodi „%1$s” kasutuskordade loendur nulliti — varem oli %2$d kasutust. Ka kliendipõhine piirang algab otsast peale.', 'wonom-kampaaniariba' ),
+					$code,
+					$before
+				);
+			}
+		} else {
+			$usage = self::usage_note( $coupon_id );
+
+			// Kasutuspiiri hoiatus kaalub ülevõtmise rõõmusõnumi üles.
+			if ( $usage ) {
+				$parts[] = $usage;
+				$level   = 'warning';
+			}
 		}
+
+		$message = implode( ' ', $parts );
 
 		return array(
 			'status'    => 'ok',

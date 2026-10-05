@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.15.0
+Stable tag: 1.16.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,12 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.16.0 =
+* Uus: kupongikaardil on nuud „Kasutuskordade loendur" plokk. See naitab, mitu korda koodi on kasutatud ja mis on piir, ning linnukesega „Nulli loendur selle salvestusega" saab arvestuse otsast peale alustada.
+* Nullimine puhastab ka kliendipohise ajaloo (`_used_by`), nii et varem ostnud klient saab sama koodi uuel jooksul uuesti kasutada. Ainult loenduri nullimine oleks nad endiselt ukse taha jatnud.
+* Linnuke kehtib uhe korra ja kustutatakse kohe, nii et jargmine salvestus loendurit ei puutu. WooCommerce'i muugiaruandeid nullimine ei muuda.
+* Salvestamise jarel oeldakse ara, mitu kasutust loendur enne nullimist naitas.
 
 = 1.15.0 =
 * Uus: sama sooduskoodi saab nuud kampaaniast kampaaniasse edasi anda. Varem luku plugin koodi esimese kampaania kulge jaadavalt — uus kampaania sai ainult teate „koodi haldab juba kampaania X" ja kupong jai vana aegumiskuupaevaga kehtetuks.

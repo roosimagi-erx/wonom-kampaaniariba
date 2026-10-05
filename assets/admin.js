@@ -385,6 +385,7 @@
 		var takeover = document.querySelector( '[data-wkr-takeover]' );
 		var takeoverText = document.querySelector( '[data-wkr-takeover-text]' );
 		var note = document.querySelector( '[data-wkr-status-note]' );
+		var usage = document.querySelector( '[data-wkr-status-usage]' );
 
 		if ( ! input || ! pill || ! CFG.couponNonce ) {
 			return;
@@ -409,6 +410,11 @@
 			if ( note ) {
 				note.textContent = data.note || '';
 				note.hidden = ! data.note;
+			}
+
+			if ( usage ) {
+				usage.textContent = data.usage || '';
+				usage.hidden = ! data.usage;
 			}
 
 			if ( takeover ) {

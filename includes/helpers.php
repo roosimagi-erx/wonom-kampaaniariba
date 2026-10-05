@@ -234,6 +234,10 @@ function wkr_meta_schema() {
 			'type'    => 'bool',
 			'default' => 0,
 		),
+		'wc_reset_usage' => array(
+			'type'    => 'bool',
+			'default' => 0,
+		),
 		'wc_exclude_sale' => array(
 			'type'    => 'bool',
 			'default' => 0,

@@ -362,6 +362,20 @@ class WKR_Meta {
 					<span class="wkr-hint"><?php esc_html_e( '0 = piiramatu', 'wonom-kampaaniariba' ); ?></span>
 				</p>
 
+				<p class="wkr-field is-wide wkr-reset-usage">
+					<label><?php esc_html_e( 'Kasutuskordade loendur', 'wonom-kampaaniariba' ); ?></label>
+					<span class="wkr-hint" data-wkr-status-usage <?php echo $status['usage'] ? '' : 'hidden'; ?>>
+						<?php echo esc_html( $status['usage'] ); ?>
+					</span>
+					<label class="wkr-check">
+						<input type="checkbox" name="wkr[wc_reset_usage]" value="1">
+						<?php esc_html_e( 'Nulli loendur selle salvestusega', 'wonom-kampaaniariba' ); ?>
+					</label>
+					<span class="wkr-hint">
+						<?php esc_html_e( 'Sama koodi uuel jooksul algab arvestus otsast peale, nii et „Kasutuskordi kokku” piir ei kandu eelmisest kampaaniast edasi. Nulli ka kliendipõhise piirangu ajaloo, nii et varem ostnud klient saab koodi uuesti kasutada. Linnuke kehtib ühe korra ja WooCommerce’i müügiaruandeid see ei puutu.', 'wonom-kampaaniariba' ); ?>
+					</span>
+				</p>
+
 				<p class="wkr-field">
 					<label for="wkr_wc_min"><?php esc_html_e( 'Vähim ostukorvi summa', 'wonom-kampaaniariba' ); ?></label>
 					<input type="number" id="wkr_wc_min" name="wkr[wc_min]" min="0" step="0.01"

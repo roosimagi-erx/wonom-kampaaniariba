@@ -824,6 +824,18 @@ body.wkr-app .wkr-wrap h2:not(.wp-heading-inline) + p.description {
 	margin: -8px 0 16px;
 }
 
+/* Loenduri nullimine on omaette tegu — eraldame selle nähtava kastiga. */
+.wkr-reset-usage {
+	padding: 12px 14px;
+	border: 1px solid var(--w-border);
+	border-radius: var(--w-radius-sm);
+	background: var(--w-bg);
+}
+
+.wkr-reset-usage > .wkr-check {
+	margin-top: 8px;
+}
+
 .wkr-woo-status .spinner {
 	float: none;
 	margin: 0;
