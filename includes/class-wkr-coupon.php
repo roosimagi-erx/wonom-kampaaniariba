@@ -720,7 +720,7 @@ class WKR_Coupon {
 		$coupon->set_description(
 			sprintf(
 				/* translators: %s: campaign title */
-				__( 'Loodud kampaaniaribaga: %s', 'wonom-kampaaniariba' ),
+				__( 'Loodud Wonom kampaaniaga: %s', 'wonom-kampaaniariba' ),
 				get_the_title( $campaign_id )
 			)
 		);

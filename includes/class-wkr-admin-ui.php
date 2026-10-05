@@ -99,14 +99,17 @@ class WKR_Admin_UI {
 				self::url( 'wkr-settings' ),
 			);
 		}
+
+		// Sama string mis menüüs, nii et nimi on kõikjal üks.
+		$brand = __( 'Wonom kampaaniad', 'wonom-kampaaniariba' );
 		?>
 		<div class="wkr-appbar">
 			<a class="wkr-brand" href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . WKR_CPT ) ); ?>">
 				<span class="wkr-logo" aria-hidden="true"><span class="dashicons dashicons-megaphone"></span></span>
-				<span class="wkr-brand-name">Wonom Kampaaniariba</span>
+				<span class="wkr-brand-name"><?php echo esc_html( $brand ); ?></span>
 				<span class="wkr-brand-version"><?php echo esc_html( WKR_VERSION ); ?></span>
 			</a>
-			<nav class="wkr-nav" aria-label="Wonom Kampaaniariba">
+			<nav class="wkr-nav" aria-label="<?php echo esc_attr( $brand ); ?>">
 				<?php foreach ( $items as $key => $item ) : ?>
 					<a href="<?php echo esc_url( $item[1] ); ?>" class="<?php echo $key === $active ? 'is-active' : ''; ?>">
 						<?php echo esc_html( $item[0] ); ?>

@@ -1,10 +1,10 @@
-=== Wonom Kampaaniariba ===
+=== Wonom kampaaniad ===
 Contributors: wonomdigital
 Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.17.0
+Stable tag: 1.18.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Ajastatud sooduspakkumiste riba poe päisesse ja jalusesse. Kampaaniad kalendris
 
 == Description ==
 
-Kampaaniariba on WooCommerce'i poe pakkumiste teavitusriba, mille saab ette ära ajastada.
+Wonom kampaaniad on WooCommerce'i poe pakkumiste teavitusriba, mille saab ette ära ajastada.
 
 Iga kampaania on eraldi kirje, millel on:
 
@@ -152,7 +152,7 @@ versiooninumber, seega uuendus toob brauserisse uued failid ise.
 
 1. Laadi ZIP üles: Pluginad - Lisa uus - Laadi plugin üles.
 2. Aktiveeri.
-3. Menüüs tekib „Kampaaniariba". Lisa esimene kampaania.
+3. Menüüs tekib „Wonom kampaaniad". Lisa esimene kampaania.
 4. Riba ilmub automaatselt. Kui teema ei kasuta wp_body_open haaki, paiguta
    riba lühikoodiga `[wonom_banner position="top"]`.
 
@@ -193,7 +193,7 @@ See on meelega. Plugin muudab ainult neid kuponge, mille ta ise lõi. Olemasolev
 == Automaatsed uuendused ==
 
 Plugin oskab end ise uuendada, ilma et ZIP-i peaks iga kord käsitsi üles laadima.
-Seaded on Kampaaniariba - Seaded - Automaatsed uuendused.
+Seaded on Wonom kampaaniad - Seaded - Automaatsed uuendused.
 
 GitHubi puhul:
 
@@ -231,6 +231,12 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.18.0 =
+* Plugina nimi on nuud „Wonom kampaaniad" — nii pluginate lehel, admin-menuus kui ka plugina enda ularibal. Varem oli „Wonom Kampaaniariba" ja menuus lihtsalt „Kampaaniariba".
+* Ingliskeelses administraatorivaates on nimi „Wonom campaigns". Kaasa tuli kaust `languages` en_US tolkega, mis katab nime, menuu ja postitupi sildid. Ulejaanud liides jaab eesti keelde.
+* WooCommerce'i kupongi kirjeldus on nuud „Loodud Wonom kampaaniaga: …".
+* Plugina kaust, failinimi ja uuenduste allikas ei muutunud, nii et olemasolevad paigaldused uuenevad tavaparaselt edasi.
 
 = 1.17.0 =
 * Uus: koodi ulevotmist saab nuud tulevikku ajastada. Kui kampaania algab alles hiljem, siis kupongi kohe ara ei votata, vaid kood broneeritakse ja omanik vahetub tapselt selle kampaania alguse hetkel. Eetris olev kampaania tootab oma akna lopuni, keegi ei tomba vaipa alt.

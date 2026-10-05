@@ -172,15 +172,15 @@ class WKR_Post_Type {
 			WKR_CPT,
 			array(
 				'labels'          => array(
-					'name'               => __( 'Kampaaniaribad', 'wonom-kampaaniariba' ),
-					'singular_name'      => __( 'Kampaaniariba', 'wonom-kampaaniariba' ),
+					'name'               => __( 'Wonom kampaaniad', 'wonom-kampaaniariba' ),
+					'singular_name'      => __( 'Kampaania', 'wonom-kampaaniariba' ),
 					'add_new'            => __( 'Lisa uus', 'wonom-kampaaniariba' ),
 					'add_new_item'       => __( 'Lisa uus kampaania', 'wonom-kampaaniariba' ),
 					'edit_item'          => __( 'Muuda kampaaniat', 'wonom-kampaaniariba' ),
 					'new_item'           => __( 'Uus kampaania', 'wonom-kampaaniariba' ),
 					'search_items'       => __( 'Otsi kampaaniaid', 'wonom-kampaaniariba' ),
 					'not_found'          => __( 'Kampaaniaid ei leitud', 'wonom-kampaaniariba' ),
-					'menu_name'          => __( 'Kampaaniariba', 'wonom-kampaaniariba' ),
+					'menu_name'          => __( 'Wonom kampaaniad', 'wonom-kampaaniariba' ),
 					'all_items'          => __( 'Kõik kampaaniad', 'wonom-kampaaniariba' ),
 				),
 				'public'          => false,
