@@ -384,6 +384,7 @@
 		var spinner = document.querySelector( '[data-wkr-status-spinner]' );
 		var takeover = document.querySelector( '[data-wkr-takeover]' );
 		var takeoverText = document.querySelector( '[data-wkr-takeover-text]' );
+		var note = document.querySelector( '[data-wkr-status-note]' );
 
 		if ( ! input || ! pill || ! CFG.couponNonce ) {
 			return;
@@ -403,6 +404,11 @@
 				} else {
 					link.hidden = true;
 				}
+			}
+
+			if ( note ) {
+				note.textContent = data.note || '';
+				note.hidden = ! data.note;
 			}
 
 			if ( takeover ) {

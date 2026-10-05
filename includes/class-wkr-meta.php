@@ -322,6 +322,10 @@ class WKR_Meta {
 			<span class="spinner" data-wkr-status-spinner></span>
 		</div>
 
+		<p class="wkr-warn wkr-woo-note" data-wkr-status-note <?php echo $status['note'] ? '' : 'hidden'; ?>>
+			<?php echo esc_html( $status['note'] ); ?>
+		</p>
+
 		<p class="wkr-field wkr-takeover" data-wkr-takeover <?php echo $status['takeover'] ? '' : 'hidden'; ?>>
 			<span class="wkr-warn" data-wkr-takeover-text><?php echo esc_html( $status['takeover_text'] ); ?></span>
 			<label class="wkr-check">
@@ -832,8 +836,12 @@ class WKR_Meta {
 		// WooCommerce'i kupong luuakse või uuendatakse alles siis, kui kõik
 		// ülejäänud väljad on juba salvestatud — sünkroonimine loeb neid.
 		$result = WKR_Coupon::sync( $post_id );
-		if ( in_array( $result['status'], array( 'conflict', 'error' ), true ) ) {
-			WKR_Coupon::remember_notice( $result['status'], $result['message'] );
+		if ( ! empty( $result['message'] ) ) {
+			$level = isset( $result['level'] )
+				? $result['level']
+				: ( 'conflict' === $result['status'] ? 'warning' : 'error' );
+
+			WKR_Coupon::remember_notice( $level, $result['message'] );
 		}
 
 		// Vahemällu salvestatud lehed hoiavad riba sellisena, nagu see oli.

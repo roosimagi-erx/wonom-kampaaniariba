@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.14.3
+Stable tag: 1.15.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,14 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.15.0 =
+* Uus: sama sooduskoodi saab nuud kampaaniast kampaaniasse edasi anda. Varem luku plugin koodi esimese kampaania kulge jaadavalt — uus kampaania sai ainult teate „koodi haldab juba kampaania X" ja kupong jai vana aegumiskuupaevaga kehtetuks.
+* Olemasoleva koodi juures ilmub nuud alati linnuke „Vota olemasolev kupong ule". Ulevotmisel saab kupong selle kampaania kuupaevad ja hakkab uuesti kehtima, vana kampaania viide koristatakse ara.
+* Hoiatus on olukorrapohine: kui eelmine kampaania on labi, siis oeldakse seda; kui see on veel eetris voi ootel, hoiatatakse, et kood lakkab seal kehtimast.
+* Uus: kui kupongi kasutuskorrad on tais, utleb plugin seda kohe koodi valja juures. See on korduvkasutatava koodi puhul sagedaseim pohjus, miks kood ka kehtiva kampaania ajal ostukorvis vastu votmata jaab — WooCommerce kontrollib kasutuspiiri enne plugina oma kontrolli.
+* Ulevotmine annab nuud rohelise teate selle kohta, mis tegelikult juhtus.
+* Parandus: kustutatud kampaania jattis koodi igaveseks lukku. Nuud koheldakse sellist kupongi nagu kasitsi tehtut.
 
 = 1.14.3 =
 * Parandus: „WooCommerce kupong" kaardis olid kupongivaljad kolmes ja tootevalikud kahes veerus, nii et servad hupelsid 334 piksli vorra. Kogu kaart kaib nuud uhe kaheveerulise ruudustiku jargi.

@@ -77,6 +77,53 @@ class WKR_Coupon {
 	}
 
 	/**
+	 * Kupongi haldav kampaania, kui see veel olemas on.
+	 *
+	 * Kustutatud kampaania jätab kupongile rippuva märke. Sellist kupongi
+	 * koheldakse nagu käsitsi tehtut, muidu jääks kood igaveseks lukku.
+	 *
+	 * @param int $coupon_id Kupongi ID.
+	 * @return int Kampaania ID või 0.
+	 */
+	public static function owner_campaign( $coupon_id ) {
+		$owner = (int) get_post_meta( $coupon_id, self::OWNER_META, true );
+
+		if ( ! $owner || WKR_CPT !== get_post_type( $owner ) ) {
+			return 0;
+		}
+
+		return $owner;
+	}
+
+	/**
+	 * Hoiatus, kui kupongi kasutuskorrad on otsas.
+	 *
+	 * Korduvkasutatava koodi puhul on see kõige sagedasem põhjus, miks kupong
+	 * ka kehtiva kampaania ajal ostukorvis vastu võtmata jääb. WooCommerce
+	 * kontrollib kasutuspiiri enne meie oma kontrolli, nii et plugin seda
+	 * kõrvale lükata ei saa — kasutaja peab piiri tõstma või loenduri nullima.
+	 *
+	 * @param int $coupon_id Kupongi ID.
+	 * @return string Tühi, kui kõik on korras.
+	 */
+	public static function usage_note( $coupon_id ) {
+		$coupon = new WC_Coupon( $coupon_id );
+		$limit  = (int) $coupon->get_usage_limit();
+		$used   = (int) $coupon->get_usage_count();
+
+		if ( $limit > 0 && $used >= $limit ) {
+			return sprintf(
+				/* translators: 1: usage count, 2: usage limit */
+				__( 'Kupongi kasutuskorrad on täis (%1$d / %2$d). Ka kehtiva kampaania ajal jääb kood ostukorvis vastu võtmata, kuni tõstad „Kasutuskordi kokku” piiri või nullid loenduri WooCommerce’i kupongi all.', 'wonom-kampaaniariba' ),
+				$used,
+				$limit
+			);
+		}
+
+		return '';
+	}
+
+	/**
 	 * Kupongi olek antud koodi jaoks.
 	 *
 	 * Sama funktsioon teenindab nii lehe esmast joonistamist kui ka AJAX-i, nii
@@ -96,6 +143,7 @@ class WKR_Coupon {
 			'state'         => 'empty',
 			'pill'          => 'off',
 			'label'         => __( 'Koodi pole sisestatud', 'wonom-kampaaniariba' ),
+			'note'          => '',
 			'edit_url'      => '',
 			'takeover'      => false,
 			'takeover_text' => '',
@@ -115,30 +163,55 @@ class WKR_Coupon {
 		}
 
 		$out['edit_url'] = (string) get_edit_post_link( $existing, 'raw' );
-		$owner           = (int) get_post_meta( $existing, self::OWNER_META, true );
+		$out['note']     = self::usage_note( $existing );
+		$owner           = self::owner_campaign( $existing );
 
-		if ( $existing === $owned ) {
+		if ( $existing === $owned || ( $owner && $owner === (int) $campaign_id ) ) {
 			$out['state'] = 'ours';
 			$out['pill']  = 'live';
 			$out['label'] = __( 'Kupong on olemas ja seda haldab see kampaania', 'wonom-kampaaniariba' );
 			return $out;
 		}
 
+		// Olemasolevat koodi saab alati üle võtta — nii saab sama koodi
+		// kampaaniast kampaaniasse edasi anda, ilma uut välja mõtlemata.
+		$out['takeover'] = true;
+
 		if ( $owner ) {
+			$other = wkr_status( $owner );
+			$title = get_the_title( $owner );
+
 			$out['state'] = 'other';
 			$out['pill']  = 'upcoming';
 			$out['label'] = sprintf(
 				/* translators: %s: campaign title */
-				__( 'Selle koodi kupongi haldab juba kampaania „%s”', 'wonom-kampaaniariba' ),
-				get_the_title( $owner )
+				__( 'Seda koodi haldab praegu kampaania „%s”', 'wonom-kampaaniariba' ),
+				$title
 			);
+
+			if ( 'live' === $other || 'upcoming' === $other ) {
+				$out['takeover_text'] = sprintf(
+					/* translators: 1: campaign title, 2: „praegu eetris” või „ootel” */
+					__( 'NB! Kampaania „%1$s” on %2$s ja kasutab sama koodi. Kui võtad koodi üle, lakkab see seal kehtimast.', 'wonom-kampaaniariba' ),
+					$title,
+					'live' === $other
+						? __( 'praegu eetris', 'wonom-kampaaniariba' )
+						: __( 'ootel', 'wonom-kampaaniariba' )
+				);
+			} else {
+				$out['takeover_text'] = sprintf(
+					/* translators: %s: campaign title */
+					__( 'Kampaania „%s” on läbi, nii et kupong kannab veel tema aegumiskuupäeva ega kehti. Võta kood üle — kupong saab selle kampaania kuupäevad ja hakkab uuesti kehtima.', 'wonom-kampaaniariba' ),
+					$title
+				);
+			}
+
 			return $out;
 		}
 
 		$out['state']         = 'manual';
 		$out['pill']          = 'upcoming';
 		$out['label']         = __( 'Selle koodiga kupong on WooCommerce’is juba olemas', 'wonom-kampaaniariba' );
-		$out['takeover']      = true;
 		$out['takeover_text'] = sprintf(
 			/* translators: %s: coupon code */
 			__( 'Kood „%s” on juba olemas ja selle on keegi käsitsi teinud. Plugin ei muuda seda ilma sinu loata.', 'wonom-kampaaniariba' ),
@@ -205,36 +278,43 @@ class WKR_Coupon {
 		$owned_id    = self::owned_id( $campaign_id );
 		$existing_id = (int) wc_get_coupon_id_by_code( $code );
 
+		$took_over_from = '';
+
 		// Sama koodiga kupong on juba olemas ja see pole meie oma.
 		if ( $existing_id && $existing_id !== $owned_id ) {
-			$owner = (int) get_post_meta( $existing_id, self::OWNER_META, true );
+			$owner = self::owner_campaign( $existing_id );
 
-			if ( $owner && $owner !== (int) $campaign_id ) {
+			// Märge näitab juba meile — viide oli lihtsalt kaduma läinud.
+			if ( $owner === (int) $campaign_id ) {
+				$owner = 0;
+			} elseif ( ! wkr_get( $campaign_id, 'wc_takeover' ) ) {
 				return array(
 					'status'    => 'conflict',
-					'message'   => sprintf(
-						/* translators: 1: coupon code, 2: campaign title */
-						__( 'Koodi „%1$s” haldab juba kampaania „%2$s”. Kupongi ei muudetud.', 'wonom-kampaaniariba' ),
-						$code,
-						get_the_title( $owner )
-					),
+					'message'   => $owner
+						? sprintf(
+							/* translators: 1: coupon code, 2: campaign title */
+							__( 'Koodi „%1$s” haldab kampaania „%2$s”, nii et kupongi ei muudetud. Kui tahad sama koodi siin edasi kasutada, märgi „Võta olemasolev kupong üle” ja salvesta uuesti.', 'wonom-kampaaniariba' ),
+							$code,
+							get_the_title( $owner )
+						)
+						: sprintf(
+							/* translators: %s: coupon code */
+							__( 'WooCommerce’is on juba kupong „%s”, mille on teinud keegi käsitsi. Kampaaniariba ei muutnud seda. Kui tahad, et plugin hakkaks seda haldama, märgi „Võta olemasolev kupong üle”.', 'wonom-kampaaniariba' ),
+							$code
+						),
 					'coupon_id' => $existing_id,
 				);
 			}
 
-			if ( ! $owner && ! wkr_get( $campaign_id, 'wc_takeover' ) ) {
-				return array(
-					'status'    => 'conflict',
-					'message'   => sprintf(
-						/* translators: %s: coupon code */
-						__( 'WooCommerce’is on juba kupong „%s”, mille on teinud keegi käsitsi. Kampaaniariba ei muutnud seda. Kui tahad, et plugin hakkaks seda haldama, märgi „Võta olemasolev kupong üle”.', 'wonom-kampaaniariba' ),
-						$code
-					),
-					'coupon_id' => $existing_id,
-				);
+			/*
+			 * Kasutaja lubas üle võtta. Vana kampaania viide tuleb ära
+			 * koristada, muidu näitaks see edasi kupongi, mida ta enam ei halda.
+			 */
+			if ( $owner ) {
+				$took_over_from = get_the_title( $owner );
+				delete_post_meta( $owner, '_wkr_coupon_id' );
 			}
 
-			// Kasutaja lubas üle võtta.
 			$owned_id = $existing_id;
 		}
 
@@ -325,9 +405,30 @@ class WKR_Coupon {
 		// Ülevõtmise linnuke on ühekordne — järgmisel salvestusel pole seda vaja.
 		update_post_meta( $campaign_id, '_wkr_wc_takeover', 0 );
 
+		$message = '';
+		$level   = 'success';
+
+		if ( $took_over_from ) {
+			$message = sprintf(
+				/* translators: 1: coupon code, 2: previous campaign title */
+				__( 'Kood „%1$s” liikus kampaanialt „%2$s” siia ja sai selle kampaania kuupäevad.', 'wonom-kampaaniariba' ),
+				$code,
+				$took_over_from
+			);
+		}
+
+		$usage = self::usage_note( $coupon_id );
+
+		// Kasutuspiiri hoiatus kaalub ülevõtmise rõõmusõnumi üles.
+		if ( $usage ) {
+			$message = $message ? $message . ' ' . $usage : $usage;
+			$level   = 'warning';
+		}
+
 		return array(
 			'status'    => 'ok',
-			'message'   => '',
+			'level'     => $level,
+			'message'   => $message,
 			'coupon_id' => (int) $coupon_id,
 		);
 	}
@@ -406,7 +507,7 @@ class WKR_Coupon {
 	/**
 	 * Salvestab teate, mida näidatakse järgmisel administraatori lehel.
 	 *
-	 * @param string $status  ok|conflict|error.
+	 * @param string $status  success|warning|error.
 	 * @param string $message Teade.
 	 */
 	public static function remember_notice( $status, $message ) {
@@ -437,7 +538,13 @@ class WKR_Coupon {
 
 		delete_transient( $key );
 
-		$class = 'conflict' === $notice['status'] ? 'notice-warning' : 'notice-error';
+		$classes = array(
+			'success'  => 'notice-success',
+			'warning'  => 'notice-warning',
+			'conflict' => 'notice-warning',
+		);
+
+		$class = isset( $classes[ $notice['status'] ] ) ? $classes[ $notice['status'] ] : 'notice-error';
 
 		printf(
 			'<div class="notice %1$s is-dismissible"><p>%2$s</p></div>',

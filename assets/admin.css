@@ -819,6 +819,11 @@ body.wkr-app .wkr-wrap h2:not(.wp-heading-inline) + p.description {
 	border: 1px solid var(--w-border);
 }
 
+/* Kasutuspiiri hoiatus istub otse olekuriba all. */
+.wkr-woo-note {
+	margin: -8px 0 16px;
+}
+
 .wkr-woo-status .spinner {
 	float: none;
 	margin: 0;
