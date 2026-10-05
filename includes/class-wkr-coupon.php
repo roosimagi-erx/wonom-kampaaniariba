@@ -23,6 +23,23 @@ class WKR_Coupon {
 	const OWNER_META = '_wkr_owner_campaign';
 
 	/**
+	 * Kampaania külge jääv märge: see kampaania on koodi endale broneerinud
+	 * ja võtab selle üle oma alguse hetkel.
+	 */
+	const CLAIM_META = '_wkr_wc_claim';
+
+	/**
+	 * Ajastatud üleandmise sündmus.
+	 */
+	const CRON_HOOK = 'wkr_coupon_handover';
+
+	/**
+	 * Valik, mis hoiab järgmise üleandmise aega. Nii piisab igal päringul
+	 * ühest kergest lugemisest, et teada, kas üldse on midagi teha.
+	 */
+	const NEXT_OPTION = 'wkr_next_handover';
+
+	/**
 	 * Haagid.
 	 */
 	public static function init() {
@@ -31,6 +48,26 @@ class WKR_Coupon {
 		add_action( 'trashed_post', array( __CLASS__, 'on_trash' ) );
 		add_action( 'untrashed_post', array( __CLASS__, 'on_untrash' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notice' ) );
+
+		add_action( self::CRON_HOOK, array( __CLASS__, 'handover' ) );
+
+		/*
+		 * Cron teeb üleandmise täpselt õigel ajal. See siin on varuvariant:
+		 * kui cron hilineb või on surnud, teeb plugin vahetuse esimesel
+		 * lehevaatel ise ära. Kupongi kehtivus ei tohi sõltuda cronist.
+		 */
+		add_action( 'init', array( __CLASS__, 'maybe_run_due' ), 20 );
+	}
+
+	/**
+	 * Kas midagi on üle anda. Odav kontroll igale päringule.
+	 */
+	public static function maybe_run_due() {
+		$next = (int) get_option( self::NEXT_OPTION, 0 );
+
+		if ( $next && time() >= $next && self::woo_active() ) {
+			self::run_due_handovers();
+		}
 	}
 
 	/**
@@ -93,6 +130,197 @@ class WKR_Coupon {
 		}
 
 		return $owner;
+	}
+
+	/**
+	 * Kas kampaania on koodi endale broneerinud.
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 * @return bool
+	 */
+	public static function has_claim( $campaign_id ) {
+		return (bool) get_post_meta( $campaign_id, self::CLAIM_META, true );
+	}
+
+	/**
+	 * Võtab broneeringu maha ja koristab ajastuse.
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 */
+	public static function forget_claim( $campaign_id ) {
+		delete_post_meta( $campaign_id, self::CLAIM_META );
+		self::unschedule_claim( $campaign_id );
+		self::refresh_next();
+	}
+
+	/**
+	 * Paneb kampaania alguse hetkele üleandmise sündmuse.
+	 *
+	 * Kutsutakse igal salvestusel, nii et kuupäeva muutmine liigutab ka
+	 * üleandmise kaasa.
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 */
+	public static function schedule_claim( $campaign_id ) {
+		self::unschedule_claim( $campaign_id );
+
+		if ( self::has_claim( $campaign_id ) ) {
+			$start = (int) get_post_meta( $campaign_id, '_wkr_start_utc', true );
+
+			if ( $start > time() ) {
+				// Paar sekundit hiljem, et kampaania oleks selleks hetkeks juba eetris.
+				wp_schedule_single_event( $start + 5, self::CRON_HOOK, array( (int) $campaign_id ) );
+			}
+		}
+
+		self::refresh_next();
+	}
+
+	/**
+	 * Eemaldab kampaania ajastatud üleandmise.
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 */
+	public static function unschedule_claim( $campaign_id ) {
+		$args      = array( (int) $campaign_id );
+		$timestamp = wp_next_scheduled( self::CRON_HOOK, $args );
+
+		while ( $timestamp ) {
+			wp_unschedule_event( $timestamp, self::CRON_HOOK, $args );
+			$timestamp = wp_next_scheduled( self::CRON_HOOK, $args );
+		}
+	}
+
+	/**
+	 * Kõik broneeringuga kampaaniad.
+	 *
+	 * @return int[]
+	 */
+	public static function claimed_campaigns() {
+		return get_posts(
+			array(
+				'post_type'        => WKR_CPT,
+				'post_status'      => array( 'publish', 'draft', 'future', 'pending' ),
+				'numberposts'      => 100,
+				'fields'           => 'ids',
+				'meta_key'         => self::CLAIM_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'       => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'suppress_filters' => true,
+			)
+		);
+	}
+
+	/**
+	 * Arvutab järgmise üleandmise aja uuesti.
+	 */
+	public static function refresh_next() {
+		$next = 0;
+
+		foreach ( self::claimed_campaigns() as $id ) {
+			$start = (int) get_post_meta( $id, '_wkr_start_utc', true );
+
+			if ( $start && ( ! $next || $start < $next ) ) {
+				$next = $start;
+			}
+		}
+
+		update_option( self::NEXT_OPTION, $next, true );
+	}
+
+	/**
+	 * Teeb ära kõik üleandmised, mille aeg on käes.
+	 */
+	public static function run_due_handovers() {
+		$now = time();
+
+		foreach ( self::claimed_campaigns() as $id ) {
+			$start = (int) get_post_meta( $id, '_wkr_start_utc', true );
+
+			if ( $start && $start <= $now ) {
+				self::handover( $id );
+			}
+		}
+
+		self::refresh_next();
+	}
+
+	/**
+	 * Annab koodi broneerinud kampaaniale üle.
+	 *
+	 * Nõusolek on juba antud siis, kui kasutaja broneeringu tegi, nii et
+	 * siin ülevõtmise linnukest enam ei küsita.
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 */
+	public static function handover( $campaign_id ) {
+		$campaign_id = (int) $campaign_id;
+
+		if ( ! $campaign_id || WKR_CPT !== get_post_type( $campaign_id ) ) {
+			return;
+		}
+
+		if ( ! self::has_claim( $campaign_id ) ) {
+			return;
+		}
+
+		/*
+		 * Kui WooCommerce ei ole (veel) laetud, siis broneeringut ära ei
+		 * kustuta — proovime järgmisel korral uuesti. Muidu kaoks üleandmine
+		 * jäädavalt pelgalt laadimisjärjekorra pärast.
+		 */
+		if ( ! self::woo_active() ) {
+			return;
+		}
+
+		// Broneering kehtib ühe korra, olenemata sellest, kuidas läheb.
+		delete_post_meta( $campaign_id, self::CLAIM_META );
+		self::unschedule_claim( $campaign_id );
+
+		/*
+		 * Koodi võtab üle ainult kampaania, kes päriselt eetrisse läks.
+		 * Mustand, välja lülitatud või juba lõppenud kampaania ei tohi
+		 * töötavat koodi endale kaasa viia.
+		 */
+		if ( 'live' !== wkr_status( $campaign_id ) ) {
+			self::refresh_next();
+			return;
+		}
+
+		$result = self::sync( $campaign_id, true );
+
+		if ( ! empty( $result['message'] ) && 'ok' !== $result['status'] ) {
+			self::remember_notice( 'warning', $result['message'] );
+		}
+
+		self::refresh_next();
+	}
+
+	/**
+	 * Kampaaniad, kes on selle koodi endale broneerinud.
+	 *
+	 * @param string $code        Sooduskood.
+	 * @param int    $exclude_id  Kampaania, keda vastusesse ei taheta.
+	 * @return int[]
+	 */
+	public static function claims_for_code( $code, $exclude_id = 0 ) {
+		$code = self::format_code( $code );
+		$out  = array();
+
+		if ( '' === $code ) {
+			return $out;
+		}
+
+		foreach ( self::claimed_campaigns() as $id ) {
+			if ( (int) $id === (int) $exclude_id ) {
+				continue;
+			}
+
+			if ( self::format_code( wkr_get( $id, 'coupon' ) ) === $code ) {
+				$out[] = (int) $id;
+			}
+		}
+
+		return $out;
 	}
 
 	/**
@@ -228,6 +456,42 @@ class WKR_Coupon {
 			$out['state'] = 'ours';
 			$out['pill']  = 'live';
 			$out['label'] = __( 'Kupong on olemas ja seda haldab see kampaania', 'wonom-kampaaniariba' );
+
+			// Kui keegi on koodi endale broneerinud, siis öeldakse see välja,
+			// et ülevõtmine ei tuleks hiljem üllatusena.
+			$next = self::claims_for_code( $code, $campaign_id );
+
+			if ( $next ) {
+				$heir             = $next[0];
+				$out['note']      = sprintf(
+					/* translators: 1: start time, 2: campaign title */
+					__( 'Kood on broneeritud: %1$s läheb see üle kampaaniale „%2$s” ja lakkab siin kehtimast.', 'wonom-kampaaniariba' ),
+					wkr_pretty( wkr_get( $heir, 'start_local' ) ),
+					get_the_title( $heir )
+				);
+			}
+
+			return $out;
+		}
+
+		// Oleme koodi ise broneerinud — ülevõtmist enam uuesti küsida ei ole vaja.
+		if ( self::has_claim( $campaign_id ) ) {
+			$out['state'] = 'claimed';
+			$out['pill']  = 'upcoming';
+			$out['label'] = sprintf(
+				/* translators: %s: start time */
+				__( 'Kood on broneeritud — liigub siia %s, kui kampaania algab', 'wonom-kampaaniariba' ),
+				wkr_pretty( wkr_get( $campaign_id, 'start_local' ) )
+			);
+
+			if ( $owner ) {
+				$out['note'] = sprintf(
+					/* translators: %s: campaign title */
+					__( 'Seni haldab koodi kampaania „%s” ja see töötab seal edasi.', 'wonom-kampaaniariba' ),
+					get_the_title( $owner )
+				);
+			}
+
 			return $out;
 		}
 
@@ -247,10 +511,35 @@ class WKR_Coupon {
 				$title
 			);
 
-			if ( 'live' === $other || 'upcoming' === $other ) {
+			$my_start = (int) get_post_meta( $campaign_id, '_wkr_start_utc', true );
+
+			if ( $my_start > time() ) {
+				/*
+				 * Tulevikus algav kampaania koodi praegu ära ei kisu — see
+				 * broneeritakse ja vahetus käib alguse hetkel.
+				 */
+				$out['takeover_text'] = sprintf(
+					/* translators: 1: start time, 2: campaign title */
+					__( 'Kood ei liigu kohe: see broneeritakse ja tuleb siia %1$s, kui kampaania algab. Kuni selle ajani töötab kood kampaanias „%2$s” edasi.', 'wonom-kampaaniariba' ),
+					wkr_pretty( wkr_get( $campaign_id, 'start_local' ) ),
+					$title
+				);
+
+				// Kattumise korral võidab hilisem algus — see tasub välja öelda.
+				$other_end = (int) get_post_meta( $owner, '_wkr_end_utc', true );
+
+				if ( $other_end > $my_start ) {
+					$out['takeover_text'] .= ' ' . sprintf(
+						/* translators: 1: campaign title, 2: that campaign's end time */
+						__( 'NB! Kampaaniad kattuvad: „%1$s” kestab %2$s-ni, aga kood lakkab seal kehtimast juba siis, kui see kampaania algab.', 'wonom-kampaaniariba' ),
+						$title,
+						wkr_pretty( wkr_get( $owner, 'end_local' ) )
+					);
+				}
+			} elseif ( 'live' === $other || 'upcoming' === $other ) {
 				$out['takeover_text'] = sprintf(
 					/* translators: 1: campaign title, 2: „praegu eetris” või „ootel” */
-					__( 'NB! Kampaania „%1$s” on %2$s ja kasutab sama koodi. Kui võtad koodi üle, lakkab see seal kehtimast.', 'wonom-kampaaniariba' ),
+					__( 'NB! Kampaania „%1$s” on %2$s ja kasutab sama koodi. See kampaania on juba alanud, nii et ülevõtmine käib kohe ja kood lakkab seal kehtimast.', 'wonom-kampaaniariba' ),
 					$title,
 					'live' === $other
 						? __( 'praegu eetris', 'wonom-kampaaniariba' )
@@ -305,7 +594,7 @@ class WKR_Coupon {
 	 * @param int $campaign_id Kampaania ID.
 	 * @return array {status: ok|skipped|conflict|error, message: string, coupon_id: int}
 	 */
-	public static function sync( $campaign_id ) {
+	public static function sync( $campaign_id, $force_takeover = false ) {
 		$mode = wkr_get( $campaign_id, 'wc_mode' );
 		$code = self::format_code( wkr_get( $campaign_id, 'coupon' ) );
 
@@ -314,13 +603,16 @@ class WKR_Coupon {
 		 * kui ükski kontroll saab poole pealt välja hüpata — muidu jääksid
 		 * nad rippuma ja mõjuksid ootamatult järgmisel salvestusel.
 		 */
-		$takeover = (bool) wkr_get( $campaign_id, 'wc_takeover' );
+		$takeover = $force_takeover || (bool) wkr_get( $campaign_id, 'wc_takeover' );
 		$reset    = (bool) wkr_get( $campaign_id, 'wc_reset_usage' );
 
 		update_post_meta( $campaign_id, '_wkr_wc_takeover', 0 );
 		update_post_meta( $campaign_id, '_wkr_wc_reset_usage', 0 );
 
 		if ( 'manage' !== $mode ) {
+			// Ilma halduseta ei ole ka broneeringul mõtet.
+			self::forget_claim( $campaign_id );
+
 			// Linnuke ilma halduseta ei tee midagi — ütleme seda, mitte ei vaiki.
 			return array(
 				'status'    => $takeover || $reset ? 'conflict' : 'skipped',
@@ -360,7 +652,8 @@ class WKR_Coupon {
 			// Märge näitab juba meile — viide oli lihtsalt kaduma läinud.
 			if ( $owner === (int) $campaign_id ) {
 				$owner = 0;
-			} elseif ( ! $takeover ) {
+			} elseif ( ! $takeover && ! self::has_claim( $campaign_id ) ) {
+				// Juba broneerinud kampaania ei pea linnukest iga salvestusega uuesti märkima.
 				return array(
 					'status'    => 'conflict',
 					'message'   => $owner
@@ -380,9 +673,34 @@ class WKR_Coupon {
 			}
 
 			/*
-			 * Kasutaja lubas üle võtta. Vana kampaania viide tuleb ära
-			 * koristada, muidu näitaks see edasi kupongi, mida ta enam ei halda.
+			 * Kasutaja lubas üle võtta. Kui see kampaania algab alles
+			 * tulevikus ja koodi haldab praegu mõni teine kampaania, siis me
+			 * kupongi veel ei puutu — muidu kaotaks eetris olev kampaania
+			 * koodi sealsamas ära. Selle asemel paneme broneeringu ja anname
+			 * kupongi üle alles siis, kui see kampaania päriselt algab.
 			 */
+			$start = (int) get_post_meta( $campaign_id, '_wkr_start_utc', true );
+
+			if ( ! $force_takeover && $owner && $start > time() ) {
+				update_post_meta( $campaign_id, self::CLAIM_META, 1 );
+				self::schedule_claim( $campaign_id );
+
+				return array(
+					'status'    => 'ok',
+					'level'     => 'success',
+					'message'   => sprintf(
+						/* translators: 1: coupon code, 2: start time, 3: current owner campaign */
+						__( 'Kood „%1$s” on broneeritud. See liigub siia %2$s, kui kampaania algab. Seni jääb kood kampaaniale „%3$s” ja töötab seal edasi.', 'wonom-kampaaniariba' ),
+						$code,
+						wkr_pretty( wkr_get( $campaign_id, 'start_local' ) ),
+						get_the_title( $owner )
+					),
+					'coupon_id' => $existing_id,
+				);
+			}
+
+			// Vana kampaania viide tuleb ära koristada, muidu näitaks see
+			// edasi kupongi, mida ta enam ei halda.
 			if ( $owner ) {
 				$took_over_from = get_the_title( $owner );
 				delete_post_meta( $owner, '_wkr_coupon_id' );
@@ -475,6 +793,11 @@ class WKR_Coupon {
 		update_post_meta( $coupon_id, self::OWNER_META, (int) $campaign_id );
 		update_post_meta( $campaign_id, '_wkr_coupon_id', (int) $coupon_id );
 
+		// Kood on käes — broneeringut enam vaja ei ole.
+		if ( self::has_claim( $campaign_id ) ) {
+			self::forget_claim( $campaign_id );
+		}
+
 
 		$parts = array();
 		$level = 'success';
@@ -562,6 +885,9 @@ class WKR_Coupon {
 		if ( WKR_CPT !== get_post_type( $post_id ) ) {
 			return;
 		}
+
+		// Prügikasti visatud kampaania ei pea enam kellegi koodi ootama.
+		self::forget_claim( $post_id );
 
 		$coupon_id = self::owned_id( $post_id );
 		if ( $coupon_id ) {

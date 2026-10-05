@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Wonom Kampaaniariba
  * Description:       Ajastatud sooduspakkumiste riba poe päisesse ja jalusesse. Kampaaniad kalendris, tekstid kahes keeles, sooduskood ühe klõpsuga kopeeritav, WooCommerce'i kupong luuakse samast kohast.
- * Version:           1.16.2
+ * Version:           1.17.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Wonom Digital
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WKR_VERSION', '1.16.2' );
+define( 'WKR_VERSION', '1.17.0' );
 define( 'WKR_FILE', __FILE__ );
 define( 'WKR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WKR_URL', plugin_dir_url( __FILE__ ) );
@@ -60,6 +60,9 @@ register_activation_hook(
 	function () {
 		WKR_Post_Type::register();
 		flush_rewrite_rules();
+
+		// Autoload'itud valik hoiab ajastatud üleandmise kontrolli odavana.
+		add_option( 'wkr_next_handover', 0, '', 'yes' );
 	}
 );
 
@@ -68,5 +71,6 @@ register_deactivation_hook(
 	function () {
 		flush_rewrite_rules();
 		wp_clear_scheduled_hook( 'wkr_cron_heartbeat' );
+		wp_clear_scheduled_hook( 'wkr_coupon_handover' );
 	}
 );

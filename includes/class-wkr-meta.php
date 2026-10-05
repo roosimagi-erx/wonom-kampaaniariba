@@ -849,6 +849,10 @@ class WKR_Meta {
 		// WooCommerce'i kupong luuakse või uuendatakse alles siis, kui kõik
 		// ülejäänud väljad on juba salvestatud — sünkroonimine loeb neid.
 		$result = WKR_Coupon::sync( $post_id );
+
+		// Kuupäeva muutmine peab ajastatud üleandmise kaasa liigutama.
+		WKR_Coupon::schedule_claim( $post_id );
+
 		if ( ! empty( $result['message'] ) ) {
 			$level = isset( $result['level'] )
 				? $result['level']

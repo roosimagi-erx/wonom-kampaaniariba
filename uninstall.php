@@ -40,6 +40,7 @@ $wkr_options = array(
 	'wkr_update_repo',
 	'wkr_update_token',
 	'wkr_update_json',
+	'wkr_next_handover',
 );
 
 foreach ( $wkr_options as $wkr_option ) {
@@ -49,3 +50,4 @@ foreach ( $wkr_options as $wkr_option ) {
 delete_transient( 'wkr_update_info' );
 
 wp_clear_scheduled_hook( 'wkr_cron_heartbeat' );
+wp_clear_scheduled_hook( 'wkr_coupon_handover' );

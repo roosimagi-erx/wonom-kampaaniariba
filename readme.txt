@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.16.2
+Stable tag: 1.17.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,14 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.17.0 =
+* Uus: koodi ulevotmist saab nuud tulevikku ajastada. Kui kampaania algab alles hiljem, siis kupongi kohe ara ei votata, vaid kood broneeritakse ja omanik vahetub tapselt selle kampaania alguse hetkel. Eetris olev kampaania tootab oma akna lopuni, keegi ei tomba vaipa alt.
+* Varem oli ulevotmine hetkeline: tulevase kampaania seadistamine votis koodi elusalt kampaanialt kohe ara ja riba reklaamis poes koodi, mis ostukorvis enam ei kehtinud.
+* Kattuvate kampaaniate puhul votab koodi ule see, kes hiljem algab. Salvestamise eel oeldakse kattumine eraldi valja.
+* Olekuriba naitab molemat poolt: broneerinud kampaanial „Kood on broneeritud — liigub siia 05.10.2026 18:40", praegusel omanikul „Kood on broneeritud: 05.10.2026 18:40 laheb see ule kampaaniale X".
+* Uleandmine kaib WP-Croniga tapselt oigel ajal. Kui cron hilineb voi on surnud, teeb plugin vahetuse esimesel lehevaatel ise ara — kupongi kehtivus ei soltu cronist.
+* Koodi ei vii endaga kaasa kampaania, kes pariselt eetrisse ei lainud: mustandi, valja lulitatud voi juba loppenud kampaania broneering kustub ilma kupongi puutumata.
 
 = 1.16.2 =
 * Parandus: linnuke „Vota olemasolev kupong ule ja hakka seda siit haldama" ei teinud midagi, kui vali „Mida pluginaga kupongiga teha" oli „Ainult naitan koodi ribal". Nuud lulitab linnuke reziimi ise umber ja kupongi seaded tulevad kohe nahtavale.
