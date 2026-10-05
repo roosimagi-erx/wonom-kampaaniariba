@@ -489,6 +489,15 @@ body.wkr-app .wkr-wrap h2:not(.wp-heading-inline) + p.description {
 	max-width: 140px;
 }
 
+/*
+ * Meie oma klassid panevad display: block, mis kirjutab brauseri
+ * [hidden] { display: none } reegli üle — peidetud vihjed ja hoiatused
+ * jäid sellega tühjade ribadena nähtavale. See reegel paneb asja paika.
+ */
+body.wkr-app [hidden] {
+	display: none !important;
+}
+
 .wkr-hint {
 	display: block;
 	margin-top: 5px;

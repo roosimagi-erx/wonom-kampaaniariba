@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.16.1
+Stable tag: 1.16.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,12 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.16.2 =
+* Parandus: linnuke „Vota olemasolev kupong ule ja hakka seda siit haldama" ei teinud midagi, kui vali „Mida pluginaga kupongiga teha" oli „Ainult naitan koodi ribal". Nuud lulitab linnuke reziimi ise umber ja kupongi seaded tulevad kohe nahtavale.
+* Parandus: kui linnuke salvestati ikkagi ilma halduseta, vaikis plugin maha. Nuud utleb ara, et kupongi ei puututud ja mida teha.
+* Parandus: peidetud vihjed ja hoiatused paistsid ekraanil valja. Meie oma klasside `display: block` kirjutas brauseri `[hidden]` reegli ule, mistottu kampaania muutmise ekraanil seisid alaliselt nahtaval tuhi kollane riba, nupp „Tolgi eesti keelest", automaatse tolke marge ja kihi korguse hoiatus — ka siis, kui kiht oli taiesti normaalne.
+* Ulevotmise ja loenduri nullimise linnukesed kustutatakse nuud kohe salvestuse alguses, nii et poolele teele katkenud salvestus ei jata neid rippuma.
 
 = 1.16.1 =
 * Parandus: kuupaeva- ja kellaajavalija ei tootanud. Uue kujunduse meta box'i reegel `overflow: hidden` loikas kalendriakna kaardi servas pooleks — kellaaja valikud ja nupp „Valmis" jaid tapselt sinna loigatud ossa ega olnud klikitavad. Umarad nurgad seda reeglit ei vaja, nii et see sai valja.

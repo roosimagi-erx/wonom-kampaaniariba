@@ -471,9 +471,32 @@
 	function bindWoo() {
 		var mode = document.getElementById( 'wkr_wc_mode' );
 		var fields = document.querySelector( '.wkr-woo-fields' );
-		if ( mode && fields ) {
+		var takeover = document.querySelector( '[data-wkr-takeover] input[type="checkbox"]' );
+
+		if ( mode ) {
 			mode.addEventListener( 'change', function () {
-				fields.hidden = mode.value !== 'manage';
+				if ( fields ) {
+					fields.hidden = mode.value !== 'manage';
+				}
+				// „Ainult näitan koodi ribal” ei halda midagi — siis ei ole ka mida üle võtta.
+				if ( takeover && mode.value !== 'manage' ) {
+					takeover.checked = false;
+				}
+			} );
+		}
+
+		/*
+		 * Linnuke lubab „hakka seda siit haldama”, nii et see peab režiimi ka
+		 * päriselt ümber lülitama ja kupongi seaded nähtavale tooma. Muidu
+		 * märgib kasutaja linnukese ära, midagi ei juhtu ja salvestus ei tee
+		 * samuti midagi.
+		 */
+		if ( mode && takeover ) {
+			takeover.addEventListener( 'change', function () {
+				if ( takeover.checked && mode.value !== 'manage' ) {
+					mode.value = 'manage';
+					mode.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+				}
 			} );
 		}
 

@@ -309,21 +309,28 @@ class WKR_Coupon {
 		$mode = wkr_get( $campaign_id, 'wc_mode' );
 		$code = self::format_code( wkr_get( $campaign_id, 'coupon' ) );
 
+		/*
+		 * Mõlemad linnukesed kehtivad ühe korra. Kustutame märked kohe, enne
+		 * kui ükski kontroll saab poole pealt välja hüpata — muidu jääksid
+		 * nad rippuma ja mõjuksid ootamatult järgmisel salvestusel.
+		 */
+		$takeover = (bool) wkr_get( $campaign_id, 'wc_takeover' );
+		$reset    = (bool) wkr_get( $campaign_id, 'wc_reset_usage' );
+
+		update_post_meta( $campaign_id, '_wkr_wc_takeover', 0 );
+		update_post_meta( $campaign_id, '_wkr_wc_reset_usage', 0 );
+
 		if ( 'manage' !== $mode ) {
+			// Linnuke ilma halduseta ei tee midagi — ütleme seda, mitte ei vaiki.
 			return array(
-				'status'    => 'skipped',
-				'message'   => '',
+				'status'    => $takeover || $reset ? 'conflict' : 'skipped',
+				'level'     => 'warning',
+				'message'   => $takeover || $reset
+					? __( 'Kupongi ei puututud, sest väli „Mida pluginaga kupongiga teha” on „Ainult näitan koodi ribal”. Kupongi ülevõtmiseks ja haldamiseks vali „Loo ja hoia WooCommerce kupong siit”.', 'wonom-kampaaniariba' )
+					: '',
 				'coupon_id' => 0,
 			);
 		}
-
-		/*
-		 * Nullimise linnuke on ühekordne. Kustutame märke kohe, enne kui
-		 * ükski muu kontroll saab poole pealt välja hüpata — muidu jääks see
-		 * rippuma ja järgmine salvestus nulliks loenduri ootamatult.
-		 */
-		$reset = (bool) wkr_get( $campaign_id, 'wc_reset_usage' );
-		update_post_meta( $campaign_id, '_wkr_wc_reset_usage', 0 );
 
 		if ( ! self::woo_active() ) {
 			return array(
@@ -353,7 +360,7 @@ class WKR_Coupon {
 			// Märge näitab juba meile — viide oli lihtsalt kaduma läinud.
 			if ( $owner === (int) $campaign_id ) {
 				$owner = 0;
-			} elseif ( ! wkr_get( $campaign_id, 'wc_takeover' ) ) {
+			} elseif ( ! $takeover ) {
 				return array(
 					'status'    => 'conflict',
 					'message'   => $owner
@@ -468,8 +475,6 @@ class WKR_Coupon {
 		update_post_meta( $coupon_id, self::OWNER_META, (int) $campaign_id );
 		update_post_meta( $campaign_id, '_wkr_coupon_id', (int) $coupon_id );
 
-		// Ülevõtmise linnuke on ühekordne — järgmisel salvestusel pole seda vaja.
-		update_post_meta( $campaign_id, '_wkr_wc_takeover', 0 );
 
 		$parts = array();
 		$level = 'success';
