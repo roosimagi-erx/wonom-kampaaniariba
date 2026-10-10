@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.18.0
+Stable tag: 1.19.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,11 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.19.0 =
+* Muudatus: lõpuni jäänud aja loendur ilmub ribale alles kampaania viimasel 24 tunnil. Varem seisis see ribal kogu kampaania aja, ka siis, kui lõpuni oli veel nädal.
+* Otsuse teeb brauser, mitte server: vahemälus seisev leht (FlyingPress, Cloudflare) näitab loendurit õigel hetkel ka siis, kui see on salvestatud päevi varem. Loenduri ilmumisel arvutatakse jaluse riba kõrgus uuesti.
+* Linnukese silt on nüüd „Näita lõpuni jäänud aega (viimased 24 tundi)" ja eelvaade näitab loendurit ilma päevadeta.
 
 = 1.18.0 =
 * Plugina nimi on nuud „Wonom kampaaniad" — nii pluginate lehel, admin-menuus kui ka plugina enda ularibal. Varem oli „Wonom Kampaaniariba" ja menuus lihtsalt „Kampaaniariba".

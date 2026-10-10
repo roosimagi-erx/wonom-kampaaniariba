@@ -679,7 +679,7 @@ class WKR_Meta {
 			</label>
 			<label class="wkr-check">
 				<input type="checkbox" name="wkr[countdown]" value="1" <?php checked( wkr_get( $post->ID, 'countdown' ), 1 ); ?> data-wkr="countdown">
-				<?php esc_html_e( 'Näita lõpuni jäänud aega', 'wonom-kampaaniariba' ); ?>
+				<?php esc_html_e( 'Näita lõpuni jäänud aega (viimased 24 tundi)', 'wonom-kampaaniariba' ); ?>
 			</label>
 		</fieldset>
 		<p class="wkr-hint">

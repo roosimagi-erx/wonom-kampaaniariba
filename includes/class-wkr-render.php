@@ -302,9 +302,16 @@ if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textConte
 					<span class="wkr-line"><?php echo self::coupon_html( $post, $coupon ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped ?></span>
 				<?php endif; ?>
 
-				<?php if ( wkr_get( $post->ID, 'countdown' ) && $end_ts ) : ?>
-					<span class="wkr-line">
-						<span class="wkr-countdown" data-wkr-end="<?php echo esc_attr( $end_ts ); ?>"></span>
+				<?php
+				/*
+				 * Loendur on peidus, kuni kampaania lõpuni on alla 24 tunni.
+				 * Otsuse teeb brauser, sest leht võib olla vahemälus päevi —
+				 * serveris joonistatud olek oleks selleks ajaks vale.
+				 */
+				if ( wkr_get( $post->ID, 'countdown' ) && $end_ts ) :
+					?>
+					<span class="wkr-line wkr-line--countdown" style="display:none">
+						<span class="wkr-countdown" data-wkr-end="<?php echo esc_attr( $end_ts ); ?>" data-wkr-window="<?php echo esc_attr( DAY_IN_SECONDS ); ?>"></span>
 					</span>
 				<?php endif; ?>
 

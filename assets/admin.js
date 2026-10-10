@@ -302,7 +302,8 @@
 			cdLine.className = 'wkr-line';
 			var cd = document.createElement( 'span' );
 			cd.className = 'wkr-countdown';
-			cd.textContent = lang === 'en' ? 'ends in 2 d 04:12:08' : 'lõpeb 2 p 04:12:08';
+			// Päris ribal ilmub loendur alles viimasel ööpäeval, nii et päevi seal ei näe.
+			cd.textContent = lang === 'en' ? 'ends in 04:12:08' : 'lõpeb 04:12:08';
 			cdLine.appendChild( cd );
 			banner.appendChild( cdLine );
 		}

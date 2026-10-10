@@ -301,10 +301,29 @@
 
 		function paint() {
 			var now = Math.floor( Date.now() / 1000 );
+			var changed = false;
 
 			Array.prototype.forEach.call( nodes, function ( node ) {
 				var end = parseInt( node.getAttribute( 'data-wkr-end' ), 10 ) || 0;
 				var left = end - now;
+
+				// Loendur ilmub alles viimasel ööpäeval (0 = alati nähtav).
+				var win = parseInt( node.getAttribute( 'data-wkr-window' ), 10 ) || 0;
+				var line = node.parentNode;
+				var show = left > 0 && ( ! win || left < win );
+
+				if ( line && line.classList && line.classList.contains( 'wkr-line--countdown' ) ) {
+					var want = show ? '' : 'none';
+					if ( line.style.display !== want ) {
+						line.style.display = want;
+						changed = true;
+					}
+				}
+
+				if ( left > 0 && ! show ) {
+					node.textContent = '';
+					return;
+				}
 
 				if ( left <= 0 ) {
 					var slot = node.closest ? node.closest( '.wkr-slot' ) : null;
@@ -326,6 +345,11 @@
 					? lead + ' ' + d + ' ' + ( TXT.days || 'p' ) + ' ' + pad( h ) + ':' + pad( m ) + ':' + pad( s )
 					: lead + ' ' + pad( h ) + ':' + pad( m ) + ':' + pad( s );
 			} );
+
+			// Rida tuli juurde või kadus — riba kõrgus muutus, jaluse ruum peab järele tulema.
+			if ( changed ) {
+				refresh();
+			}
 		}
 
 		paint();
