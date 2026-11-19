@@ -11,3 +11,8 @@ desktop.ini
 
 # Ehitatud pakendid ei kuulu koodihoidlasse — need lähevad väljalaske külge
 *.zip
+
+# Sisemised juhendid: asuvad kaustas "Wonom juhendid" väljaspool repot, siia ei kuulu
+wonom-woocommerce-plugin-alus*.md
+wonom-pluginad-serveri-koormuse-reeglid*.md
+*KOORMUS*.md

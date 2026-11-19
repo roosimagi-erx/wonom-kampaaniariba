@@ -1,6 +1,7 @@
 /**
  * Wonom Kampaaniariba — poe esikülje käitumine.
- * Sulgemine, kokkukäinud riba, sooduskoodi kopeerimine, tagasiloendus.
+ * Sulgemine, kokkukäinud riba, sooduskoodi kopeerimine, tagasiloendus,
+ * riba peitmine kampaania lõpus.
  */
 ( function () {
 	'use strict';
@@ -356,6 +357,80 @@
 		setInterval( paint, 1000 );
 	}
 
+	/**
+	 * Kampaania lõpp.
+	 *
+	 * Leht võib olla vahemälus ka pärast kampaania lõppu ja server sellele
+	 * lehele enam ei pääse — riba peidab seetõttu brauser lõpuaja järgi.
+	 * Sama taimer peidab riba täpsel sekundil ka siis, kui leht on lahti.
+	 */
+	var expireTimer = null;
+
+	function expire() {
+		var now = Math.floor( Date.now() / 1000 );
+		var next = 0;
+		var changed = false;
+
+		Array.prototype.forEach.call( document.querySelectorAll( '.wkr-slot[data-wkr-end]' ), function ( slot ) {
+			var end = parseInt( slot.getAttribute( 'data-wkr-end' ), 10 ) || 0;
+
+			if ( ! end ) {
+				return;
+			}
+
+			if ( now >= end ) {
+				if ( slot.style.display !== 'none' ) {
+					slot.style.display = 'none';
+					changed = true;
+				}
+			} else if ( ! next || end < next ) {
+				next = end;
+			}
+		} );
+
+		if ( changed ) {
+			refresh();
+		}
+
+		clearTimeout( expireTimer );
+
+		if ( next ) {
+			// Brauseri taimeri ülempiir on umbes 24 päeva.
+			expireTimer = setTimeout( expire, Math.min( ( next - now ) * 1000 + 250, 2147000000 ) );
+		}
+	}
+
+	/**
+	 * Klõps ribal jätab sooduskoodi küpsisesse, et ostukorv saaks selle
+	 * rakendada. Tavaliselt teeb seda juba lehe päises olev skript; see siin
+	 * on varuks lehtedele, kus riba tuleb lühikoodist.
+	 */
+	function bindApply() {
+		if ( window.wkrApply ) {
+			return;
+		}
+		window.wkrApply = 1;
+
+		document.addEventListener( 'click', function ( ev ) {
+			var link = ev.target && ev.target.closest ? ev.target.closest( 'a[data-wkr-apply]' ) : null;
+			if ( ! link ) {
+				return;
+			}
+
+			var slot = link.closest( '.wkr-slot' );
+			var end = slot ? parseInt( slot.getAttribute( 'data-wkr-end' ), 10 ) || 0 : 0;
+			var age = end ? Math.max( 60, Math.min( 259200, end - Math.floor( Date.now() / 1000 ) ) ) : 259200;
+
+			try {
+				document.cookie = 'wkr_coupon=' + encodeURIComponent( link.getAttribute( 'data-wkr-apply' ) ) +
+					';path=/;max-age=' + age + ';SameSite=Lax' +
+					( 'https:' === location.protocol ? ';Secure' : '' );
+			} catch ( e ) {
+				/* küpsised keelatud — link töötab ikka, kood jääb lihtsalt rakendamata */
+			}
+		}, true );
+	}
+
 	function refresh() {
 		applyBottomInset();
 		pad_body();
@@ -367,6 +442,15 @@
 
 	function start() {
 		Array.prototype.forEach.call( document.querySelectorAll( '.wkr-slot' ), bindSlot );
+		bindApply();
+
+		// Enne varajase stiili eemaldamist: lõppenud riba peab peitu jääma.
+		expire();
+		document.addEventListener( 'visibilitychange', function () {
+			if ( ! document.hidden ) {
+				expire();
+			}
+		} );
 
 		/*
 		 * Varajane stiil on oma töö teinud — edasi juhib olekut klass, muidu

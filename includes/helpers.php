@@ -551,3 +551,29 @@ function wkr_active_campaigns( $now = 0 ) {
 
 	return $cache[ $bucket ];
 }
+
+/**
+ * Kas see sait on test- või arenduskoopia, mitte päris pood.
+ *
+ * Testkoopia jagab tihti päris poega nii serverit kui ka Cloudflare'i tsooni
+ * ja tema andmebaasis on päris poe võtmed. Seetõttu ei tee plugin testsaidilt
+ * Cloudflare'i päringuid ega tühjenda seal automaatselt kõiki lehti.
+ *
+ * @return bool
+ */
+function wkr_is_test_host() {
+	$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+	$test = (bool) preg_match( '/^(test|staging|stage|dev)[.-]/i', $host );
+
+	if ( ! $test && function_exists( 'wp_get_environment_type' ) ) {
+		$test = 'production' !== wp_get_environment_type();
+	}
+
+	/**
+	 * Kas saiti koheldakse testsaidina.
+	 *
+	 * @param bool   $test Senine otsus.
+	 * @param string $host Saidi hostinimi.
+	 */
+	return (bool) apply_filters( 'wkr_is_test_host', $test, $host );
+}

@@ -82,6 +82,16 @@ class WKR_Settings {
 
 		register_setting(
 			'wkr_settings',
+			'wkr_purge_urls',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_urls' ),
+				'default'           => '',
+			)
+		);
+
+		register_setting(
+			'wkr_settings',
 			'wkr_cf_zone',
 			array(
 				'type'              => 'string',
@@ -170,6 +180,29 @@ class WKR_Settings {
 	public static function sanitize_source( $value ) {
 		$value = is_string( $value ) ? $value : '';
 		return in_array( $value, array( 'github', 'json' ), true ) ? $value : 'off';
+	}
+
+	/**
+	 * Tühjendatavate aadresside nimekiri: üks rida aadressi kohta.
+	 *
+	 * Alles jäävad ainult selle saidi aadressid — kas rada (/epood/) või
+	 * täisaadress. Tühi väli tähendab vaikimisi nimekirja.
+	 *
+	 * @param mixed $value Väärtus.
+	 * @return string
+	 */
+	public static function sanitize_urls( $value ) {
+		$lines = array();
+
+		foreach ( preg_split( '/\R/', is_string( $value ) ? $value : '' ) as $line ) {
+			$line = trim( sanitize_text_field( $line ) );
+
+			if ( '' !== $line && WKR_Cache::normalize_url( $line ) ) {
+				$lines[ $line ] = true;
+			}
+		}
+
+		return implode( "\n", array_slice( array_keys( $lines ), 0, WKR_Cache::MAX_URLS ) );
 	}
 
 	/**
@@ -312,8 +345,20 @@ class WKR_Settings {
 				<div class="wkr-card">
 				<h2><?php esc_html_e( 'Vahemälu', 'wonom-kampaaniariba' ); ?></h2>
 				<p class="description">
-					<?php esc_html_e( 'Riba kirjutatakse lehe HTML-i sisse, seega vahemällu salvestatud leht hoiab riba sellisena, nagu see salvestamise hetkel oli. Plugin tühjendab vahemälu kampaania salvestamisel ning paneb ajastatud tühjenduse kampaania algus- ja lõpuajale.', 'wonom-kampaaniariba' ); ?>
+					<?php esc_html_e( 'Riba kirjutatakse lehe HTML-i sisse, seega vahemällu salvestatud leht hoiab riba sellisena, nagu see salvestamise hetkel oli. Kogu saidi vahemälu tühjendamine on poele kallis, sest pärast seda tuleb iga leht uuesti kokku panna. Plugin teeb seetõttu nii vähe kui võimalik:', 'wonom-kampaaniariba' ); ?>
 				</p>
+				<ul class="wkr-list">
+					<li><?php esc_html_e( 'Kampaania salvestamisel, prügikasti viimisel ja taastamisel tühjendatakse ainult allpool loetletud aadressid — üks kord, umbes 45 sekundit pärast viimast muudatust.', 'wonom-kampaaniariba' ); ?></li>
+					<li><?php esc_html_e( 'Kampaania lõpp ei tühjenda midagi: riba peidab kliendi brauser lõpuaja järgi, ka vahemälus oleval lehel.', 'wonom-kampaaniariba' ); ?></li>
+					<li><?php esc_html_e( 'Kampaania algus tühjendab praegu veel kõik lehed, et uus riba jõuaks igale poole. See on ajutine ja kaob järgmises suuremas versioonis.', 'wonom-kampaaniariba' ); ?></li>
+					<li><?php esc_html_e( 'Plugina uuendamine ei tühjenda midagi.', 'wonom-kampaaniariba' ); ?></li>
+				</ul>
+
+				<?php if ( wkr_is_test_host() ) : ?>
+					<p class="wkr-warn">
+						<?php esc_html_e( 'See on testsait. Cloudflare’i päringuid siit ei tehta ka siis, kui võti on sisestatud, ja kampaania algus ei tühjenda siin kõiki lehti. Aadressipõhine tühjendus salvestamisel töötab nagu päris poes.', 'wonom-kampaaniariba' ); ?>
+					</p>
+				<?php endif; ?>
 
 				<table class="form-table" role="presentation">
 					<tr>
@@ -321,7 +366,7 @@ class WKR_Settings {
 						<td>
 							<label>
 								<input type="checkbox" name="wkr_auto_purge" value="1" <?php checked( (int) get_option( 'wkr_auto_purge', 1 ), 1 ); ?>>
-								<?php esc_html_e( 'Tühjenda vahemälu kampaania muutmisel ja kampaania piiridel', 'wonom-kampaaniariba' ); ?>
+								<?php esc_html_e( 'Tühjenda loetletud aadressid kampaania muutmisel ja kõik lehed kampaania algusel', 'wonom-kampaaniariba' ); ?>
 							</label>
 							<p class="description">
 								<?php
@@ -339,7 +384,7 @@ class WKR_Settings {
 							</p>
 							<?php if ( ! empty( $_SERVER['HTTP_CF_RAY'] ) || get_option( 'wkr_cf_zone' ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- ainult olemasolu kontroll. ?>
 								<p class="description">
-									<?php esc_html_e( 'Cloudflare on selle poe ees. Kui Cloudflare hoiab ka HTML-i (Cache Everything või APO), tuleb ka tema vahemälu tühjendada — täida allolevad väljad.', 'wonom-kampaaniariba' ); ?>
+									<?php esc_html_e( 'Cloudflare on selle poe ees. Kui Cloudflare hoiab ka HTML-i (Cache Everything või APO), tuleb ka tema vahemälu tühjendada — täida allolevad väljad. Kampaania muutmisel tühjendatakse Cloudflare’is ainult loetletud aadressid, kampaania algusel kogu tsoon. Testsaidilt Cloudflare’i päringuid ei tehta.', 'wonom-kampaaniariba' ); ?>
 								</p>
 							<?php endif; ?>
 							<?php if ( class_exists( '\FlyingPress\Purge' ) || function_exists( 'rocket_clean_domain' ) || has_action( 'litespeed_purge_all' ) ) : ?>
@@ -380,16 +425,86 @@ class WKR_Settings {
 									if ( 'stale' === $cron['state'] ) {
 										printf(
 											/* translators: %s: human readable time difference */
-											esc_html__( 'WP-Cron ei ole käivitunud alates %s tagasi. Kampaania algus- ja lõpuaja tühjendus jääb tegemata.', 'wonom-kampaaniariba' ),
+											esc_html__( 'WP-Cron ei ole käivitunud alates %s tagasi. Kampaania alguse tühjendus jääb tegemata; salvestamise järel tehakse aadresside tühjendus järgmisel administraatori lehel.', 'wonom-kampaaniariba' ),
 											esc_html( human_time_diff( $cron['last'] ) )
 										);
 									} else {
-										esc_html_e( 'WP-Cron on välja lülitatud (DISABLE_WP_CRON) ega ole veel kordagi käivitunud. Kampaania algus- ja lõpuaja tühjendus jääb tegemata, kuni serveris ei ole cron-tööd, mis wp-cron.php käivitab.', 'wonom-kampaaniariba' );
+										esc_html_e( 'WP-Cron on välja lülitatud (DISABLE_WP_CRON) ega ole veel kordagi käivitunud. Kampaania alguse tühjendus jääb tegemata, kuni serveris ei ole cron-tööd, mis wp-cron.php käivitab. Salvestamise järel tehakse aadresside tühjendus järgmisel administraatori lehel.', 'wonom-kampaaniariba' );
 									}
 									?>
 									<br>
 									<code>*/5 * * * * curl -s <?php echo esc_html( home_url( '/wp-cron.php?doing_wp_cron' ) ); ?> &gt; /dev/null</code>
 								</p>
+							<?php endif; ?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="wkr_purge_urls"><?php esc_html_e( 'Tühjendatavad aadressid', 'wonom-kampaaniariba' ); ?></label>
+						</th>
+						<td>
+							<textarea id="wkr_purge_urls" name="wkr_purge_urls" rows="10" class="large-text code" spellcheck="false"><?php echo esc_textarea( WKR_Cache::paths_text() ); ?></textarea>
+							<p class="description">
+								<?php
+								printf(
+									/* translators: %d: maximum number of addresses */
+									esc_html__( 'Üks aadress rea kohta, kas rada (/epood/) või selle saidi täisaadress. Kõige rohkem %d aadressi. Need lehed tühjendatakse ja laetakse kohe uuesti vahemällu, kui kampaaniat muudad. Pane siia lehed, kuhu kliendid kõige sagedamini maanduvad. Tühi väli taastab vaikimisi nimekirja.', 'wonom-kampaaniariba' ),
+									(int) WKR_Cache::MAX_URLS
+								);
+								?>
+							</p>
+							<?php
+							$pending = WKR_Cache::pending();
+							$recent  = WKR_Cache::recent();
+
+							if ( $pending ) :
+								?>
+								<p class="description">
+									<span class="wkr-pill wkr-pill--upcoming"><?php esc_html_e( 'Tühjendus ootel', 'wonom-kampaaniariba' ); ?></span>
+									<?php
+									printf(
+										/* translators: %s: time */
+										esc_html__( 'Tehakse pärast kella %s.', 'wonom-kampaaniariba' ),
+										esc_html( wp_date( 'H:i:s', $pending ) )
+									);
+									?>
+								</p>
+							<?php endif; ?>
+							<?php if ( $recent ) : ?>
+								<p class="description"><strong><?php esc_html_e( 'Viimased tühjendused', 'wonom-kampaaniariba' ); ?></strong></p>
+								<ul class="wkr-list">
+									<?php foreach ( $recent as $row ) : ?>
+										<li>
+											<?php
+											$reasons = array(
+												'change' => __( 'kampaania muudatus', 'wonom-kampaaniariba' ),
+												'start'  => __( 'kampaania algus', 'wonom-kampaaniariba' ),
+												'manual' => __( 'käsitsi nupust', 'wonom-kampaaniariba' ),
+											);
+
+											$what = 'all' === $row['kind']
+												? __( 'kõik lehed', 'wonom-kampaaniariba' )
+												: sprintf(
+													/* translators: %d: number of addresses */
+													__( '%d aadressi', 'wonom-kampaaniariba' ),
+													(int) $row['count']
+												);
+
+											printf(
+												'%1$s — %2$s (%3$s) · %4$s',
+												esc_html( wp_date( 'd.m.Y H:i:s', (int) $row['time'] ) ),
+												esc_html( $what ),
+												esc_html( isset( $reasons[ $row['reason'] ] ) ? $reasons[ $row['reason'] ] : $row['reason'] ),
+												esc_html( $row['done'] ? implode( ', ', (array) $row['done'] ) : __( 'ühtegi vahemälu ei leitud', 'wonom-kampaaniariba' ) )
+											);
+
+											if ( ! empty( $row['errors'] ) ) {
+												echo ' · <span class="wkr-warn-text">' . esc_html( implode( ' · ', (array) $row['errors'] ) ) . '</span>';
+											}
+											?>
+										</li>
+									<?php endforeach; ?>
+								</ul>
 							<?php endif; ?>
 						</td>
 					</tr>
@@ -604,11 +719,15 @@ class WKR_Settings {
 					<?php wp_nonce_field( 'wkr_check_update' ); ?>
 					<?php submit_button( __( 'Kontrolli uuendusi kohe', 'wonom-kampaaniariba' ), 'secondary', 'submit', false ); ?>
 				</form>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline"
+					onsubmit="return window.confirm( <?php echo esc_attr( wp_json_encode( __( 'See tühjendab KOGU saidi lehtede vahemälu. Pärast seda pannakse iga leht uuesti kokku ja pood on mõnda aega aeglasem. Tee seda ainult vaiksel ajal ja siis, kui teisiti ei saa. Kas jätkan?', 'wonom-kampaaniariba' ) ) ); ?> );">
 					<input type="hidden" name="action" value="wkr_purge">
 					<?php wp_nonce_field( 'wkr_purge' ); ?>
-					<?php submit_button( __( 'Tühjenda vahemälu kohe', 'wonom-kampaaniariba' ), 'secondary', 'submit', false ); ?>
+					<?php submit_button( __( 'Tühjenda kogu vahemälu kohe', 'wonom-kampaaniariba' ), 'secondary', 'submit', false ); ?>
 				</form>
+			</p>
+			<p class="wkr-warn">
+				<?php esc_html_e( '„Tühjenda kogu vahemälu kohe” tühjendab kõik lehed korraga ja koormab serverit. Tavatöös seda vaja ei ole: kampaania muutmisel tühjendab plugin vajalikud lehed ise. Nupp on alles ainult hädaolukorraks ja kaob järgmises suuremas versioonis.', 'wonom-kampaaniariba' ); ?>
 			</p>
 
 			<div class="wkr-card">

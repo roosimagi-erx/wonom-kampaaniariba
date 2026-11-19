@@ -78,7 +78,7 @@ class WKR_Render {
 	/**
 	 * Millised ribad sellel lehel üldse renderduvad.
 	 *
-	 * @return array<int,array{0:int,1:string}> Paarid [kampaania ID, koht].
+	 * @return array<int,array{0:int,1:string,2:int}> Kolmikud [kampaania ID, koht, lõpuaeg].
 	 */
 	private static function slots_on_page() {
 		$slots = array();
@@ -86,7 +86,11 @@ class WKR_Render {
 		foreach ( array( 'top', 'bottom' ) as $place ) {
 			$post = self::pick( $place );
 			if ( $post ) {
-				$slots[] = array( (int) $post->ID, $place );
+				$slots[] = array(
+					(int) $post->ID,
+					$place,
+					(int) get_post_meta( $post->ID, '_wkr_end_utc', true ),
+				);
 			}
 		}
 
@@ -94,11 +98,16 @@ class WKR_Render {
 	}
 
 	/**
-	 * Taastab varem suletud riba oleku enne lehe joonistamist.
+	 * Seab riba oleku paika enne lehe joonistamist.
 	 *
-	 * See peab jooksma <head>-is ja sünkroonselt. Kui see skript jääb hiljaks,
-	 * jõuab riba enne avatuna ära joonistuda ja alles siis kokku kukkuda —
-	 * külastajale paistab see vilkumisena.
+	 * Kolm asja, mis peavad jooksma <head>-is ja sünkroonselt:
+	 *
+	 * 1. Lõppenud kampaania riba peidetakse. Leht võib olla vahemälus päevi
+	 *    pärast kampaania lõppu — riba ei tohi siis hetkekski vilksatada.
+	 * 2. Varem suletud riba jääb suletuks. Kui see skript jääb hiljaks, jõuab
+	 *    riba enne avatuna ära joonistuda ja alles siis kokku kukkuda.
+	 * 3. Klõps ribal jätab sooduskoodi küpsisesse, et ostukorv saaks selle
+	 *    rakendada. Link ise jääb puhtaks ja leht tuleb vahemälust.
 	 *
 	 * Kiirenduspluginad, mis viivitavad kogu JavaScripti kuni esimese
 	 * kasutaja tegevuseni, lükkavad ka selle edasi. Skript kannab seetõttu
@@ -116,15 +125,19 @@ class WKR_Render {
 
 		$list = array();
 		foreach ( $slots as $slot ) {
-			$list[] = array( (string) $slot[0], $slot[1] );
+			$list[] = array( (string) $slot[0], $slot[1], (int) $slot[2] );
 		}
 		?>
 <script id="wkr-restore" data-no-optimize="1" data-no-defer="1" data-no-delay="1" data-cfasync="false">
 /* wkr-restore */
-(function(){try{var s=<?php echo wp_json_encode( $list, JSON_HEX_TAG | JSON_HEX_AMP ); ?>,c="",i,k;
-for(i=0;i<s.length;i++){k="wkr_d_"+s[i][0]+"_"+s[i][1];
-if(localStorage.getItem(k)){c+="#wkr-"+s[i][0]+"-"+s[i][1]+" .wkr-banner{display:none!important}#wkr-"+s[i][0]+"-"+s[i][1]+" .wkr-mini{display:block!important}";}}
-if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textContent=c;(document.head||document.documentElement).appendChild(e);}}catch(e){}})();
+(function(){var s=<?php echo wp_json_encode( $list, JSON_HEX_TAG | JSON_HEX_AMP ); ?>,c="",i,p,n=Math.floor(Date.now()/1000);
+for(i=0;i<s.length;i++){p="#wkr-"+s[i][0]+"-"+s[i][1];
+if(s[i][2]&&n>=s[i][2]){c+=p+"{display:none!important}";continue;}
+try{if(localStorage.getItem("wkr_d_"+s[i][0]+"_"+s[i][1])){c+=p+" .wkr-banner{display:none!important}"+p+" .wkr-mini{display:block!important}";}}catch(e){}}
+if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textContent=c;(document.head||document.documentElement).appendChild(e);}
+window.wkrApply=1;document.addEventListener("click",function(v){var a=v.target&&v.target.closest?v.target.closest("a[data-wkr-apply]"):null;if(!a){return;}
+var b=a.closest(".wkr-slot"),t=b?parseInt(b.getAttribute("data-wkr-end"),10)||0:0,m=t?Math.max(60,Math.min(259200,t-Math.floor(Date.now()/1000))):259200;
+try{document.cookie="wkr_coupon="+encodeURIComponent(a.getAttribute("data-wkr-apply"))+";path=/;max-age="+m+";SameSite=Lax"+("https:"===location.protocol?";Secure":"");}catch(e){}},true);})();
 </script>
 		<?php
 	}
@@ -266,9 +279,10 @@ if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textConte
 		$inline_style .= ';--wkr-expand-size:' . max( 8, (float) wkr_get( $post->ID, 'expand_size' ) ) . 'px';
 
 		$link = wkr_text( $post->ID, 'link' );
-		if ( $link && $coupon && wkr_get( $post->ID, 'apply_coupon' ) ) {
-			$link = add_query_arg( 'wkr_coupon', rawurlencode( $coupon ), $link );
-		}
+
+		// Kood ei käi enam lingi külge: parameetriga aadress ei tule vahemälust.
+		// Klõps jätab koodi küpsisesse, vaata restore_script().
+		$apply = ( $link && $coupon && wkr_get( $post->ID, 'apply_coupon' ) ) ? $coupon : '';
 
 		ob_start();
 		?>
@@ -277,6 +291,7 @@ if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textConte
 			style="<?php echo esc_attr( $inline_style ); ?>"
 			data-wkr-id="<?php echo esc_attr( $id ); ?>"
 			data-wkr-place="<?php echo esc_attr( $place ); ?>"
+			data-wkr-end="<?php echo esc_attr( $end_ts ); ?>"
 			data-wkr-avoid="<?php echo (int) wkr_get( $post->ID, 'avoid_bottom' ); ?>"
 			data-wkr-offset="<?php echo esc_attr( $bottom_offset ); ?>"
 			<?php if ( 'bottom' === $place && ! $inline ) : ?>
@@ -286,7 +301,7 @@ if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textConte
 
 			<div class="wkr-banner">
 				<?php if ( $link ) : ?>
-					<a class="wkr-cover" href="<?php echo esc_url( $link ); ?>">
+					<a class="wkr-cover" href="<?php echo esc_url( $link ); ?>"<?php echo $apply ? ' data-wkr-apply="' . esc_attr( $apply ) . '"' : ''; ?>>
 						<span class="screen-reader-text"><?php echo esc_html( get_the_title( $post ) ); ?></span>
 					</a>
 				<?php endif; ?>
@@ -379,7 +394,18 @@ if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textConte
 	}
 
 	/**
+	 * Küpsis, kuhu riba klõps sooduskoodi jätab.
+	 */
+	const COUPON_COOKIE = 'wkr_coupon';
+
+	/**
 	 * Rakendab ostukorvis koodi, kui külastaja tuli ribalt.
+	 *
+	 * Kood tuleb küpsisest, mille riba klõps brauserisse jättis. Varem oli kood
+	 * lingi küljes parameetrina (?wkr_coupon=KOOD), aga parameetriga aadressi
+	 * ei saa vahemälust serveerida ja iga klõps pani serveri lehte nullist
+	 * kokku panema. Vana kuju töötab edasi, sest vahemälus võib selliseid
+	 * linke veel olla.
 	 */
 	public static function maybe_apply_coupon() {
 		if ( is_admin() || ! function_exists( 'WC' ) ) {
@@ -387,16 +413,65 @@ if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textConte
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- avalik link, mitte vormi saatmine.
-		$code = isset( $_GET['wkr_coupon'] ) ? sanitize_text_field( wp_unslash( $_GET['wkr_coupon'] ) ) : '';
-		if ( '' === $code ) {
+		$code        = isset( $_GET['wkr_coupon'] ) ? sanitize_text_field( wp_unslash( $_GET['wkr_coupon'] ) ) : '';
+		$from_cookie = false;
+
+		if ( '' === $code && isset( $_COOKIE[ self::COUPON_COOKIE ] ) ) {
+			$code        = sanitize_text_field( wp_unslash( $_COOKIE[ self::COUPON_COOKIE ] ) );
+			$from_cookie = true;
+		}
+
+		if ( '' === $code || strlen( $code ) > 60 ) {
 			return;
 		}
 
 		$cart = WC()->cart;
-		if ( ! $cart || $cart->has_discount( $code ) ) {
+		if ( ! $cart ) {
 			return;
 		}
 
+		if ( $cart->has_discount( $code ) ) {
+			if ( $from_cookie ) {
+				self::forget_coupon_cookie();
+			}
+			return;
+		}
+
+		if ( ! $from_cookie ) {
+			$cart->apply_coupon( $code );
+			return;
+		}
+
+		// Tühja korvi külge koodi ei pane — ootame, kuni seal midagi on.
+		if ( $cart->is_empty() || ! class_exists( 'WC_Discounts' ) ) {
+			return;
+		}
+
+		/*
+		 * Klient ei sisestanud koodi ise, seega ei tohi ta näha ka veateadet,
+		 * kui kood parajasti ei sobi (näiteks korvi summa on veel liiga väike).
+		 * Kontrollime vaikselt ette; küpsis jääb alles ja proovime uuesti,
+		 * kui korv muutub.
+		 */
+		$coupon    = new WC_Coupon( $code );
+		$discounts = new WC_Discounts( $cart );
+
+		if ( ! $coupon->get_id() || is_wp_error( $discounts->is_coupon_valid( $coupon ) ) ) {
+			return;
+		}
+
+		self::forget_coupon_cookie();
 		$cart->apply_coupon( $code );
+	}
+
+	/**
+	 * Kustutab koodiküpsise, kui kood on korvis.
+	 */
+	private static function forget_coupon_cookie() {
+		unset( $_COOKIE[ self::COUPON_COOKIE ] );
+
+		if ( ! headers_sent() ) {
+			setcookie( self::COUPON_COOKIE, '', time() - DAY_IN_SECONDS, '/' );
+		}
 	}
 }

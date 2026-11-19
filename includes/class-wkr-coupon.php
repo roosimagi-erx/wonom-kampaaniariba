@@ -29,6 +29,13 @@ class WKR_Coupon {
 	const CLAIM_META = '_wkr_wc_claim';
 
 	/**
+	 * Kampaania külge jääv märge: broneeritud koodi kasutuskordade loendur
+	 * tuleb üleandmise hetkel nullida. Salvestamise ajal seda teha ei saa,
+	 * sest kood töötab siis veel eelmises kampaanias.
+	 */
+	const CLAIM_RESET_META = '_wkr_wc_claim_reset';
+
+	/**
 	 * Ajastatud üleandmise sündmus.
 	 */
 	const CRON_HOOK = 'wkr_coupon_handover';
@@ -149,6 +156,7 @@ class WKR_Coupon {
 	 */
 	public static function forget_claim( $campaign_id ) {
 		delete_post_meta( $campaign_id, self::CLAIM_META );
+		delete_post_meta( $campaign_id, self::CLAIM_RESET_META );
 		self::unschedule_claim( $campaign_id );
 		self::refresh_next();
 	}
@@ -206,6 +214,8 @@ class WKR_Coupon {
 				'meta_key'         => self::CLAIM_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'meta_value'       => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 				'suppress_filters' => true,
+				// Luku taga oodanud päring peab nägema värsket seisu, mitte selle päringu varasemat vastust.
+				'cache_results'    => false,
 			)
 		);
 	}
@@ -229,37 +239,54 @@ class WKR_Coupon {
 
 	/**
 	 * Teeb ära kõik üleandmised, mille aeg on käes.
+	 *
+	 * Alguse hetkel võivad seda korraga alustada mitu päringut: cron ja samal
+	 * sekundil koodi sisestav klient. Lukk laseb läbi ühe; teised ootavad
+	 * hetke, kuni kupong on valmis, ja näevad siis juba kehtivat koodi. Ilma
+	 * ootamata saaks klient vastuseks „kood ei kehti”.
 	 */
 	public static function run_due_handovers() {
-		$now = time();
+		$lock = self::lock();
+		$now  = time();
 
 		foreach ( self::claimed_campaigns() as $id ) {
 			$start = (int) get_post_meta( $id, '_wkr_start_utc', true );
 
 			if ( $start && $start <= $now ) {
-				self::handover( $id );
+				self::do_handover( $id );
 			}
 		}
 
 		self::refresh_next();
+		self::unlock( $lock );
 	}
 
 	/**
-	 * Annab koodi broneerinud kampaaniale üle.
+	 * Annab koodi broneerinud kampaaniale üle (ajastatud sündmus).
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 */
+	public static function handover( $campaign_id ) {
+		$lock = self::lock();
+
+		self::do_handover( $campaign_id );
+
+		self::refresh_next();
+		self::unlock( $lock );
+	}
+
+	/**
+	 * Üleandmise sisu. Kutsuja hoiab lukku.
 	 *
 	 * Nõusolek on juba antud siis, kui kasutaja broneeringu tegi, nii et
 	 * siin ülevõtmise linnukest enam ei küsita.
 	 *
 	 * @param int $campaign_id Kampaania ID.
 	 */
-	public static function handover( $campaign_id ) {
+	private static function do_handover( $campaign_id ) {
 		$campaign_id = (int) $campaign_id;
 
 		if ( ! $campaign_id || WKR_CPT !== get_post_type( $campaign_id ) ) {
-			return;
-		}
-
-		if ( ! self::has_claim( $campaign_id ) ) {
 			return;
 		}
 
@@ -272,8 +299,15 @@ class WKR_Coupon {
 			return;
 		}
 
-		// Broneering kehtib ühe korra, olenemata sellest, kuidas läheb.
-		delete_post_meta( $campaign_id, self::CLAIM_META );
+		// Luku ootamise ajal võis teine päring töö ära teha — loeme oleku uuesti.
+		wp_cache_delete( $campaign_id, 'post_meta' );
+
+		// Kustutamine õnnestub ainult ühel päringul. Broneering kehtib ühe
+		// korra, olenemata sellest, kuidas edasi läheb.
+		if ( ! self::has_claim( $campaign_id ) || ! delete_post_meta( $campaign_id, self::CLAIM_META ) ) {
+			return;
+		}
+
 		self::unschedule_claim( $campaign_id );
 
 		/*
@@ -282,7 +316,7 @@ class WKR_Coupon {
 		 * töötavat koodi endale kaasa viia.
 		 */
 		if ( 'live' !== wkr_status( $campaign_id ) ) {
-			self::refresh_next();
+			delete_post_meta( $campaign_id, self::CLAIM_RESET_META );
 			return;
 		}
 
@@ -291,8 +325,37 @@ class WKR_Coupon {
 		if ( ! empty( $result['message'] ) && 'ok' !== $result['status'] ) {
 			self::remember_notice( 'warning', $result['message'] );
 		}
+	}
 
-		self::refresh_next();
+	/**
+	 * Võtab andmebaasi luku koodide üleandmisele.
+	 *
+	 * Lukk on nimeline ja kaob ise, kui päring lõpeb või ühendus katkeb, nii et
+	 * rippuma see jääda ei saa. Kui lukku paari sekundiga ei saa, jätkame
+	 * ilma — topelttöö eest kaitseb siis broneeringu kustutamine.
+	 *
+	 * @return string Luku nimi või tühi, kui lukku ei saadud.
+	 */
+	private static function lock() {
+		global $wpdb;
+
+		$name = 'wkr_handover_' . md5( DB_NAME . $wpdb->prefix );
+		$got  = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $name, 3 ) );
+
+		return '1' === (string) $got ? $name : '';
+	}
+
+	/**
+	 * Laseb luku lahti.
+	 *
+	 * @param string $name Luku nimi.
+	 */
+	private static function unlock( $name ) {
+		global $wpdb;
+
+		if ( $name ) {
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) );
+		}
 	}
 
 	/**
@@ -604,7 +667,8 @@ class WKR_Coupon {
 		 * nad rippuma ja mõjuksid ootamatult järgmisel salvestusel.
 		 */
 		$takeover = $force_takeover || (bool) wkr_get( $campaign_id, 'wc_takeover' );
-		$reset    = (bool) wkr_get( $campaign_id, 'wc_reset_usage' );
+		$reset    = (bool) wkr_get( $campaign_id, 'wc_reset_usage' )
+			|| (bool) get_post_meta( $campaign_id, self::CLAIM_RESET_META, true );
 
 		update_post_meta( $campaign_id, '_wkr_wc_takeover', 0 );
 		update_post_meta( $campaign_id, '_wkr_wc_reset_usage', 0 );
@@ -683,6 +747,13 @@ class WKR_Coupon {
 
 			if ( ! $force_takeover && $owner && $start > time() ) {
 				update_post_meta( $campaign_id, self::CLAIM_META, 1 );
+
+				// Loendurit ei saa praegu nullida — kood töötab veel eelmises
+				// kampaanias. Jätame soovi meelde ja täidame selle üleandmisel.
+				if ( $reset ) {
+					update_post_meta( $campaign_id, self::CLAIM_RESET_META, 1 );
+				}
+
 				self::schedule_claim( $campaign_id );
 
 				return array(
@@ -694,7 +765,9 @@ class WKR_Coupon {
 						$code,
 						wkr_pretty( wkr_get( $campaign_id, 'start_local' ) ),
 						get_the_title( $owner )
-					),
+					) . ( get_post_meta( $campaign_id, self::CLAIM_RESET_META, true )
+						? ' ' . __( 'Kasutuskordade loendur nullitakse samal hetkel, kui kood üle tuleb.', 'wonom-kampaaniariba' )
+						: '' ),
 					'coupon_id' => $existing_id,
 				);
 			}
@@ -792,6 +865,8 @@ class WKR_Coupon {
 
 		update_post_meta( $coupon_id, self::OWNER_META, (int) $campaign_id );
 		update_post_meta( $campaign_id, '_wkr_coupon_id', (int) $coupon_id );
+
+		delete_post_meta( $campaign_id, self::CLAIM_RESET_META );
 
 		// Kood on käes — broneeringut enam vaja ei ole.
 		if ( self::has_claim( $campaign_id ) ) {

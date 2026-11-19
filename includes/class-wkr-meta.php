@@ -240,7 +240,7 @@ class WKR_Meta {
 					<input type="checkbox" name="wkr[apply_coupon]" value="1" <?php checked( $apply, 1 ); ?>>
 					<?php esc_html_e( 'Rakenda kood ostukorvis, kui klient ribal klõpsab', 'wonom-kampaaniariba' ); ?>
 				</label>
-				<span class="wkr-hint"><?php esc_html_e( 'Lisab lingile ?wkr_coupon=KOOD ja paneb soodustuse kohe korvi.', 'wonom-kampaaniariba' ); ?></span>
+				<span class="wkr-hint"><?php esc_html_e( 'Klõps ribal jätab koodi kliendi brauserisse meelde ja soodustus läheb korvi kohe, kui seal on mõni toode. Link ise jääb puhtaks, nii et leht tuleb vahemälust.', 'wonom-kampaaniariba' ); ?></span>
 			</p>
 		</div>
 
@@ -371,8 +371,13 @@ class WKR_Meta {
 						<input type="checkbox" name="wkr[wc_reset_usage]" value="1">
 						<?php esc_html_e( 'Nulli loendur selle salvestusega', 'wonom-kampaaniariba' ); ?>
 					</label>
+					<?php if ( get_post_meta( $post->ID, WKR_Coupon::CLAIM_RESET_META, true ) ) : ?>
+						<span class="wkr-hint">
+							<strong><?php esc_html_e( 'Nullimine on ootel: loendur nullitakse samal hetkel, kui broneeritud kood kampaania algusel siia üle tuleb.', 'wonom-kampaaniariba' ); ?></strong>
+						</span>
+					<?php endif; ?>
 					<span class="wkr-hint">
-						<?php esc_html_e( 'Sama koodi uuel jooksul algab arvestus otsast peale, nii et „Kasutuskordi kokku” piir ei kandu eelmisest kampaaniast edasi. Nulli ka kliendipõhise piirangu ajaloo, nii et varem ostnud klient saab koodi uuesti kasutada. Linnuke kehtib ühe korra ja WooCommerce’i müügiaruandeid see ei puutu.', 'wonom-kampaaniariba' ); ?>
+						<?php esc_html_e( 'Sama koodi uuel jooksul algab arvestus otsast peale, nii et „Kasutuskordi kokku” piir ei kandu eelmisest kampaaniast edasi. Nulli ka kliendipõhise piirangu ajaloo, nii et varem ostnud klient saab koodi uuesti kasutada. Linnuke kehtib ühe korra ja WooCommerce’i müügiaruandeid see ei puutu. Kui kood on broneeritud ja tuleb siia alles kampaania algusel, nullitakse loendur üleandmise hetkel.', 'wonom-kampaaniariba' ); ?>
 					</span>
 				</p>
 
@@ -862,8 +867,8 @@ class WKR_Meta {
 		}
 
 		// Vahemällu salvestatud lehed hoiavad riba sellisena, nagu see oli.
-		// Tühjendame kohe ja paneme ajastatud tühjenduse kampaania piiridele.
+		// Tähtsamad lehed tühjendatakse viitega; kampaania algusele läheb ajastatud tühjendus.
 		WKR_Cache::schedule( $post_id );
-		WKR_Cache::auto_purge();
+		WKR_Cache::request_purge();
 	}
 }

@@ -33,6 +33,7 @@ class WKR_Updater {
 	 */
 	public static function init() {
 		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'inject' ) );
+		add_filter( 'site_transient_update_plugins', array( __CLASS__, 'inject_cached' ) );
 		add_filter( 'plugins_api', array( __CLASS__, 'details' ), 20, 3 );
 		add_filter( 'upgrader_source_selection', array( __CLASS__, 'fix_folder' ), 10, 4 );
 		add_filter( 'http_request_args', array( __CLASS__, 'auth_header' ), 10, 2 );
@@ -224,7 +225,37 @@ class WKR_Updater {
 			return $transient;
 		}
 
-		$info = self::remote();
+		return self::apply( $transient, self::remote() );
+	}
+
+	/**
+	 * Hoiab meie kirje õigena ka siis, kui WordPress uuenduste nimekirja ainult loeb.
+	 *
+	 * Tänu sellele ei pea „Kontrolli uuendusi kohe” kogu nimekirja kustutama ja
+	 * kõiki teisi pluginaid uuesti kontrollima sundima. Siin kaugpäringut ei
+	 * tehta — kasutatakse ainult juba vahemälus olevat vastust.
+	 *
+	 * @param mixed $transient Uuenduste transient.
+	 * @return mixed
+	 */
+	public static function inject_cached( $transient ) {
+		if ( ! is_object( $transient ) || 'off' === self::source() ) {
+			return $transient;
+		}
+
+		$cached = get_transient( self::TRANSIENT );
+
+		return self::apply( $transient, is_array( $cached ) ? $cached : null );
+	}
+
+	/**
+	 * Kirjutab meie plugina kirje uuenduste nimekirja.
+	 *
+	 * @param object     $transient Uuenduste transient.
+	 * @param array|null $info      Kaugallika vastus.
+	 * @return object
+	 */
+	private static function apply( $transient, $info ) {
 		if ( ! $info ) {
 			return $transient;
 		}
@@ -250,6 +281,7 @@ class WKR_Updater {
 			unset( $transient->no_update[ $file ] );
 		} else {
 			$transient->no_update[ $file ] = $item;
+			unset( $transient->response[ $file ] );
 		}
 
 		return $transient;
@@ -384,9 +416,12 @@ class WKR_Updater {
 
 		check_admin_referer( 'wkr_check_update' );
 
-		delete_transient( self::TRANSIENT );
-		delete_site_transient( 'update_plugins' );
-
+		/*
+		 * Värskendame ainult oma kirjet. WordPressi uuenduste nimekirja ei
+		 * kustutata: see paneks kõik teised pluginad end uuesti kontrollima
+		 * ja saadaks kogu nimekirja wordpress.org-i. Meie kirje jõuab nimekirja
+		 * lugemise ajal, vaata inject_cached().
+		 */
 		$info    = self::remote( true );
 		$version = $info ? $info['version'] : '';
 
