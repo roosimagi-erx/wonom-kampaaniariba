@@ -1139,3 +1139,13 @@ body.wkr-app .wkr-warn-text {
 body.wkr-app .wkr-actions + .wkr-warn {
 	max-width: 760px;
 }
+
+body.wkr-app .wkr-details {
+	margin: 8px 0;
+	font-size: 12.5px;
+	color: var(--w-muted);
+}
+
+body.wkr-app .wkr-details summary {
+	cursor: pointer;
+}

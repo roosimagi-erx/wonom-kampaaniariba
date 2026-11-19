@@ -237,7 +237,34 @@ class WKR_Cache {
 	}
 
 	/**
-	 * Üks rida seadetest: kas rada sellel saidil või selle saidi täisaadress.
+	 * Saidi juuraadress ilma rajata: skeem, host ja vajadusel port.
+	 *
+	 * Rada ei liideta home_url() abil meelega. Mitmekeelsuse pluginad (WPML,
+	 * Polylang) kirjutavad home_url() vastuse jooksva keele järgi ümber: eesti
+	 * keele vaates saab rajast /en/ avaleht ja rajast /en/shop/ olematu
+	 * /shop/. Nimekirjas olev rada peab jääma täpselt selliseks, nagu see
+	 * kirja pandi.
+	 *
+	 * @return string Näiteks https://pood.ee
+	 */
+	public static function origin() {
+		$parts = wp_parse_url( home_url() );
+
+		if ( empty( $parts['host'] ) ) {
+			return '';
+		}
+
+		$origin = ( isset( $parts['scheme'] ) ? $parts['scheme'] : 'https' ) . '://' . $parts['host'];
+
+		if ( ! empty( $parts['port'] ) ) {
+			$origin .= ':' . (int) $parts['port'];
+		}
+
+		return $origin;
+	}
+
+	/**
+	 * Üks rida seadetest: kas rada saidi juurest (/epood/) või selle saidi täisaadress.
 	 *
 	 * @param string $line Rida.
 	 * @return string Täisaadress või tühi, kui rida ei sobi.
@@ -249,14 +276,15 @@ class WKR_Cache {
 			return '';
 		}
 
+		$origin = self::origin();
+
 		if ( '/' === $line[0] ) {
-			$line = home_url( $line );
+			$line = $origin . $line;
 		}
 
-		$url  = esc_url_raw( $line );
-		$host = wp_parse_url( home_url(), PHP_URL_HOST );
+		$url = esc_url_raw( $line );
 
-		return ( $url && wp_parse_url( $url, PHP_URL_HOST ) === $host ) ? $url : '';
+		return ( $url && $origin && wp_parse_url( $url, PHP_URL_HOST ) === wp_parse_url( $origin, PHP_URL_HOST ) ) ? $url : '';
 	}
 
 	/**

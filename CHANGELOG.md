@@ -1,5 +1,19 @@
 # Muudatuste logi
 
+## 1.20.2 - 2026-11-19
+
+Sisaldab kõike versioonidest 1.20.0 ja 1.20.1 (vaata allpool) ning ühte parandust, mis tuli välja testsaidil.
+
+### Parandus: teise keele lehed jäid salvestamisel tühjendamata
+
+- Mitmekeelses poes (WPML, Polylang) kirjutati tühjendatavate aadresside nimekirjas teise keele rajad jooksva keele järgi ümber. Eesti keele vaates sai rajast `/en/` avaleht ja rajast `/en/shop/` olematu `/shop/`. Tulemus: 16 aadressist tühjendati 15 ja ingliskeelsed lehed jäid vana ribaga. Nüüd võetakse rada täpselt sellisena, nagu see nimekirjas kirjas on.
+- Seadetes on tühjendatavate aadresside välja all lahtiklõpsatav loend „Täisaadressid, mis päriselt tühjendatakse” — sealt on näha, mis aadressid vahemälule tegelikult ette antakse.
+
+### Uuendamise märkus
+
+Versioonilt 1.19.0 või vanemalt uuendades jookseb vana kood veel ühe korra ja tühjendab kogu vahemälu. Kui tahad seda vältida: lülita plugin välja → Pluginad → Lisa uus → Laadi ZIP üles → „Asenda praegune” → lülita sisse. Kampaaniad ja seaded jäävad alles. Kustutada pluginat ei tohi. Versioonilt 1.20.0 või 1.20.1 võib uuendada tavalisel viisil.
+
+
 ## 1.20.1 - 2026-11-19
 
 Sisaldab kõike versioonist 1.20.0 (vaata allpool) ja kahte täpsustust kampaania alguse kohta.

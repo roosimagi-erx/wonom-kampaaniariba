@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.20.1
+Stable tag: 1.20.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -248,6 +248,10 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.20.2 =
+* Parandus: mitmekeelses poes (WPML, Polylang) kirjutati tühjendatavate aadresside nimekirjas teise keele rajad jooksva keele järgi ümber, nii et ingliskeelsed lehed jäid kampaania salvestamisel tühjendamata. Rada võetakse nüüd täpselt sellisena, nagu see nimekirjas on.
+* Seadetes on näha täisaadressid, mis päriselt tühjendatakse.
 
 = 1.20.1 =
 * Kampaania alguse tühjendus on ajastatud täpselt algusajale (varem 5 sekundit hiljem), nii et alguse hetkel käivituv cron teeb selle kohe ja uus riba ilmub sekundite, mitte minutite pärast.

@@ -448,11 +448,28 @@ class WKR_Settings {
 								<?php
 								printf(
 									/* translators: %d: maximum number of addresses */
-									esc_html__( 'Üks aadress rea kohta, kas rada (/epood/) või selle saidi täisaadress. Kõige rohkem %d aadressi. Need lehed tühjendatakse ja laetakse kohe uuesti vahemällu, kui kampaaniat muudad. Pane siia lehed, kuhu kliendid kõige sagedamini maanduvad. Tühi väli taastab vaikimisi nimekirja.', 'wonom-kampaaniariba' ),
+									esc_html__( 'Üks aadress rea kohta, kas rada saidi juurest (/epood/, /en/shop/) või selle saidi täisaadress. Teise keele lehed pane kirja koos keele-eesliitega. Kõige rohkem %d aadressi. Need lehed tühjendatakse ja laetakse kohe uuesti vahemällu, kui kampaaniat muudad. Pane siia lehed, kuhu kliendid kõige sagedamini maanduvad. Tühi väli taastab vaikimisi nimekirja.', 'wonom-kampaaniariba' ),
 									(int) WKR_Cache::MAX_URLS
 								);
 								?>
 							</p>
+							<?php $resolved = WKR_Cache::urls(); ?>
+							<details class="wkr-details">
+								<summary>
+									<?php
+									printf(
+										/* translators: %d: number of addresses */
+										esc_html__( 'Täisaadressid, mis päriselt tühjendatakse (%d)', 'wonom-kampaaniariba' ),
+										count( $resolved )
+									);
+									?>
+								</summary>
+								<ul class="wkr-list">
+									<?php foreach ( $resolved as $resolved_url ) : ?>
+										<li><code><?php echo esc_html( $resolved_url ); ?></code></li>
+									<?php endforeach; ?>
+								</ul>
+							</details>
 							<?php
 							$pending = WKR_Cache::pending();
 							$recent  = WKR_Cache::recent();
