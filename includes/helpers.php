@@ -490,7 +490,9 @@ function wkr_status( $post_id, $now = 0 ) {
 	if ( $now < $start ) {
 		return 'upcoming';
 	}
-	if ( $now > $end ) {
+	// Lõpuhetk ise on juba „lõppenud”: kui üks kampaania lõpeb ja teine algab
+	// samal sekundil, ei tohi kumbki hetkekski koos eetris olla.
+	if ( $now >= $end ) {
 		return 'ended';
 	}
 
@@ -540,7 +542,7 @@ function wkr_active_campaigns( $now = 0 ) {
 				array(
 					'key'     => '_wkr_end_utc',
 					'value'   => $now,
-					'compare' => '>=',
+					'compare' => '>',
 					'type'    => 'NUMERIC',
 				),
 			),

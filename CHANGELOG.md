@@ -1,5 +1,21 @@
 # Muudatuste logi
 
+## 1.20.1 - 2026-11-19
+
+Sisaldab kõike versioonist 1.20.0 (vaata allpool) ja kahte täpsustust kampaania alguse kohta.
+
+### Uus riba ilmub alguse hetkel, mitte mõni minut hiljem
+
+- **Kampaania alguse tühjendus on ajastatud täpselt algusajale.** Varem oli see 5 sekundit hiljem. Kui serveri cron käivitub kindla sammuga (näiteks iga 5 minuti tagant täisminutil), jäi sündmus alguse hetke käivitusest napilt maha ja tehti alles järgmisega — vana riba oli selleks ajaks juba peidetud ja uut veel ei olnud. Nüüd teeb tühjenduse alguse hetkel käivituv cron.
+- **Varusündmus 5 minutit hiljem.** See tühjendab ainult siis, kui alguse hetke sündmus jäi tegemata või katkes. Kui esimene õnnestus, ei tee varusündmus midagi.
+- **Üks tühjendus alguse kohta.** Otsus tehakse selle järgi, kas pärast selle kampaania algust on kõik lehed juba tühjendatud. Nii annavad ühe tühjenduse mitu samal hetkel algavat kampaaniat ja samal hetkel lõppev ning algav kampaania. Versioonis 1.20.0 oli selle asemel 10-minutiline aken, mis oleks alguse tühjenduse vahele jätnud, kui vahetult enne algust oli vahemälu käsitsi tühjendatud.
+- **Lõpuhetk loetakse juba lõppenuks.** Kui üks kampaania lõpeb ja teine algab samal sekundil, ei ole nad hetkekski koos eetris: alguse sekundil kokku pandud leht saab kohe uue riba, mitte vana. Sama kehtib kupongi kohta — lõppeva kampaania kood ei kehti enam lõpusekundil.
+
+### Uuendamise märkus
+
+Versioonilt 1.19.0 või vanemalt uuendades jookseb vana kood veel ühe korra ja tühjendab kogu vahemälu. Kui tahad seda vältida: lülita plugin välja → Pluginad → Lisa uus → Laadi ZIP üles → „Asenda praegune” → lülita sisse. Kampaaniad ja seaded jäävad alles. Kustutada pluginat ei tohi.
+
+
 ## 1.20.0 - 2026-11-19
 
 ### Vahemälu: kogu saidi tühjendus on asendatud aadressipõhisega

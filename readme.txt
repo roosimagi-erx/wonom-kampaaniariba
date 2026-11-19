@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.20.0
+Stable tag: 1.20.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -248,6 +248,12 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.20.1 =
+* Kampaania alguse tühjendus on ajastatud täpselt algusajale (varem 5 sekundit hiljem), nii et alguse hetkel käivituv cron teeb selle kohe ja uus riba ilmub sekundite, mitte minutite pärast.
+* Varusündmus 5 minutit hiljem tühjendab ainult siis, kui alguse hetke sündmus jäi tegemata.
+* Üks tühjendus alguse kohta ka siis, kui samal hetkel algab mitu kampaaniat või üks lõpeb ja teine algab. Vahetult enne algust tehtud käsitsi tühjendus ei jäta alguse tühjendust enam vahele.
+* Kampaania lõpuhetk loetakse juba lõppenuks: samal sekundil lõppev ja algav kampaania ei ole hetkekski koos eetris.
 
 = 1.20.0 =
 * Vahemälu: kampaania salvestamine, prügikasti viimine ja taastamine ei tühjenda enam kogu saiti. Tühjendatakse ainult seadetes loetletud aadressid (kuni 30), üks kord, umbes 45 sekundit pärast viimast muudatust, ja need laetakse kohe uuesti vahemällu.

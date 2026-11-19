@@ -69,10 +69,10 @@ class WKR_Cache {
 	const MAX_URLS = 30;
 
 	/**
-	 * Kahe täistühjenduse vahele jääv vähim aeg sekundites. Kui ühel ja
-	 * samal hetkel algab mitu kampaaniat, tehakse üks tühjendus.
+	 * Mitu sekundit pärast kampaania algust käivitub varusündmus. See teeb
+	 * tühjenduse ainult siis, kui alguse hetke sündmus seda ei teinud.
 	 */
-	const FULL_GAP = 600;
+	const RETRY_AFTER = 300;
 
 	/**
 	 * Haagid.
@@ -479,20 +479,12 @@ class WKR_Cache {
 	 * vahemälus olevatele lehtedele teisiti. Objektivahemälu ei puututa.
 	 *
 	 * @param string $reason Miks tühjendati (logi jaoks).
-	 * @param bool   $force  Tühjenda ka siis, kui just äsja tühjendati.
+	 * @param bool   $force  Tühjenda ka siis, kui selles päringus on juba tühjendatud.
 	 * @return string[] Nimed, mille vahemälu tühjendati.
 	 */
 	public static function purge_all( $reason = 'start', $force = false ) {
-		if ( ! $force ) {
-			if ( self::$purged ) {
-				return array();
-			}
-
-			// Mitu samal hetkel algavat kampaaniat annavad ühe tühjenduse.
-			$last = (int) get_option( self::FULL_OPTION, 0 );
-			if ( $last && ( time() - $last ) < self::FULL_GAP ) {
-				return array();
-			}
+		if ( self::$purged && ! $force ) {
+			return array();
 		}
 
 		self::$purged = true;
@@ -572,15 +564,19 @@ class WKR_Cache {
 	/**
 	 * Kampaania algus: uus riba peab jõudma ka vahemälus olevatele lehtedele.
 	 *
+	 * Sündmus on ajastatud täpselt algusajale, nii et selle käivitab esimene
+	 * cron-käivitus alguse hetkel või pärast seda. Varusündmus „retry” tuleb
+	 * mõni minut hiljem ja teeb tühjenduse ainult siis, kui esimene jäi tegemata.
+	 *
 	 * Kampaania lõpp tühjendust ei vaja — riba peidab brauser. Varasemad
 	 * versioonid ajastasid ka lõpule sündmuse; kui mõni selline veel järjekorras
 	 * on, ei tee see enam midagi.
 	 *
 	 * @param int    $post_id Kampaania ID.
-	 * @param string $which   start | end.
+	 * @param string $which   start | retry | end.
 	 */
 	public static function on_boundary( $post_id = 0, $which = 'start' ) {
-		if ( 'start' !== $which || ! self::enabled() ) {
+		if ( ! in_array( $which, array( 'start', 'retry' ), true ) || ! self::enabled() ) {
 			return;
 		}
 
@@ -589,8 +585,23 @@ class WKR_Cache {
 			return;
 		}
 
+		$post_id = (int) $post_id;
+
 		// Välja lülitatud või vahepeal ümber ajastatud kampaania ei muuda lehtedel midagi.
-		if ( $post_id && 'live' !== wkr_status( (int) $post_id ) ) {
+		if ( $post_id && 'live' !== wkr_status( $post_id ) ) {
+			return;
+		}
+
+		/*
+		 * Kui pärast selle kampaania algust on kõik lehed juba tühjendatud, on
+		 * uus riba neil olemas. Nii annavad üks tühjenduse nii varusündmus,
+		 * mitu samal hetkel algavat kampaaniat kui ka samal südaööl lõppev ja
+		 * algav kampaania.
+		 */
+		$start = $post_id ? (int) get_post_meta( $post_id, '_wkr_start_utc', true ) : 0;
+		$last  = (int) get_option( self::FULL_OPTION, 0 );
+
+		if ( $start && $last >= $start ) {
 			return;
 		}
 
@@ -749,8 +760,12 @@ class WKR_Cache {
 		$start = (int) get_post_meta( $post_id, '_wkr_start_utc', true );
 
 		if ( $start > time() ) {
-			// Paar sekundit hiljem, et alguse hetkel oleks olek juba uus.
-			wp_schedule_single_event( $start + 5, self::CRON_HOOK, array( (int) $post_id, 'start' ) );
+			// Täpselt algusajale: alguse hetkel käivituv cron teeb tühjenduse
+			// kohe ja uus riba ilmub sekundite, mitte minutite pärast.
+			wp_schedule_single_event( $start, self::CRON_HOOK, array( (int) $post_id, 'start' ) );
+
+			// Varuks, kui alguse hetke käivitus jäi vahele või katkes.
+			wp_schedule_single_event( $start + self::RETRY_AFTER, self::CRON_HOOK, array( (int) $post_id, 'retry' ) );
 		}
 	}
 
@@ -760,7 +775,7 @@ class WKR_Cache {
 	 * @param int $post_id Kampaania ID.
 	 */
 	public static function unschedule( $post_id ) {
-		foreach ( array( 'start', 'end' ) as $which ) {
+		foreach ( array( 'start', 'retry', 'end' ) as $which ) {
 			$args      = array( (int) $post_id, $which );
 			$timestamp = wp_next_scheduled( self::CRON_HOOK, $args );
 
