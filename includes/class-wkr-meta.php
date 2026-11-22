@@ -866,9 +866,7 @@ class WKR_Meta {
 			WKR_Coupon::remember_notice( $level, $result['message'] );
 		}
 
-		// Vahemällu salvestatud lehed hoiavad riba sellisena, nagu see oli.
-		// Tähtsamad lehed tühjendatakse viitega; kampaania algusele läheb ajastatud tühjendus.
-		WKR_Cache::schedule( $post_id );
-		WKR_Cache::request_purge();
+		// Riba andmefail kirjutatakse uuesti pärast seda salvestust (WKR_Data,
+		// save_post prioriteediga 99). Lehtede vahemälu ei puututa.
 	}
 }

@@ -280,3 +280,22 @@
 		transition: none !important;
 	}
 }
+
+/* Sisseliikumine. Riba joonistab brauseriskript pärast lehe laadimist, nii et
+   jaluseriba libiseb alt üles, mitte ei ilmu järsku. */
+.wkr-slot--stuck,
+.wkr-slot--floating {
+	transition: transform 0.35s ease;
+}
+
+.wkr-slot--stuck.wkr-enter,
+.wkr-slot--floating.wkr-enter {
+	transform: translateY(calc(100% + var(--wkr-bottom, 0px) + 24px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wkr-slot--stuck,
+	.wkr-slot--floating {
+		transition: none !important;
+	}
+}

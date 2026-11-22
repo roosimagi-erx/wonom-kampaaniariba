@@ -1,5 +1,37 @@
 # Muudatuste logi
 
+## 1.21.0 - 2026-11-22
+
+### Riba tuleb andmefailist — vahemälu ei tühjendata enam kunagi
+
+Seni kirjutati riba lehe HTML-i sisse. Vahemälus olev leht hoidis seetõttu vana riba ja iga kampaania alguses tuli kõigi lehtede vahemälu tühjendada. Nüüd ei ole riba enam lehe sees.
+
+- **Andmefail.** Kõik eetris olevad ja tulevased kampaaniad kirjutatakse staatilisse faili kaustas `wp-content/uploads/wkr/` (üks fail keele kohta). Failis on iga kampaania algus- ja lõpuaeg ning valmis HTML. Lehel on ainult väike laadija, mis faili loeb.
+- **Kampaania algus ja lõpp** toimuvad täpsel sekundil kõigil lehtedel korraga — ka neil, mis on vahemälus või kliendil parajasti lahti. Kui üks kampaania lõpeb ja teine algab samal sekundil, vahetub riba koha peal. Server ei tee sel hetkel midagi.
+- **Kampaania salvestamine** kirjutab üle ainult andmefaili. Uus või muudetud riba jõuab kõigile lehtedele umbes minutiga, ka keset päeva.
+- **Plugin ei tühjenda enam ühtegi vahemälu.** Ära jäid: aadresside tühjendus salvestamisel, kõigi lehtede tühjendus kampaania algusel, nupp „Tühjenda kogu vahemälu kohe”, seade „Automaatne tühjendamine”, tühjendatavate aadresside nimekiri ning Cloudflare'i väljad ja päringud.
+- **Kell.** Brauser võrdleb oma kella serveri omaga, nii et vale kellaga seade ei näita valet kampaaniat ja loendur näitab õiget aega.
+- **Ilmumine.** Jaluseriba libiseb alt sisse. Päiseriba jaoks hoitakse ruum kinni, kui eelmisel lehel oli päiseriba näha, nii et leht ei hüppa.
+- **Stiilid ja skript** laetakse ainult siis, kui andmefailis on mõni kampaania, ja nende aadress tuleb andmefailist. Vana vahemälus leht saab seetõttu alati plugina praeguse versiooni.
+- **Sooduskood** ei ole andmefailis lihttekstina, vaid kodeeritult — ka siis, kui kampaania pealkiri on sama mis kood. Tulevase kampaania koodi ei saa lihtsa tekstiotsinguga enne algust üles korjata.
+- **Lühikood** `[wonom_banner]` jätab lehele koha, kuhu brauser riba joonistab. Päise- ja jaluseriba ei vaja enam teema haake.
+- **Plugina väljalülitamine** kirjutab andmefaili tühja nimekirja, nii et riba kaob ka vahemälus olevatelt lehtedelt.
+- **Seaded.** Uus kaart „Riba andmefail”: faili seis, viimase kirjutamise aeg, kampaaniate arv ja failide aadressid. Nupp „Kirjuta andmefail uuesti”.
+
+### Üleminek — tee üks kord pärast uuendust
+
+1. Ava pärast uuendust üks administraatori leht. Andmefail kirjutatakse siis valmis (Seaded → Riba andmefail peab näitama „Fail on olemas”).
+2. **Tühjenda kiirendusplugina lehtede vahemälu üks kord** (FlyingPressis „Purge pages”), vaiksel ajal. Varem vahemällu läinud lehtedel on veel vana, lehe sisse kirjutatud riba ja laadijat neil ei ole, nii et uued kampaaniad sinna ei jõuaks. Pärast seda ühte korda ei ole riba pärast enam kunagi vaja vahemälu tühjendada.
+3. Soovi korral lisa kiirendusplugina JavaScripti väljajätmiste hulka märksõna `wkr-restore`. Ilma selleta riba töötab, aga ilmub veidi hiljem.
+
+Versioonilt 1.20.x võib uuendada tavalisel viisil nupuga „Uuenda kohe” — see versioon uuendamisel vahemälu ei tühjenda.
+
+### Arendajale
+
+- Uus filter `wkr_data` (andmefaili sisu enne kirjutamist).
+- Ära jäid filtrid ja haagid `wkr_purge_urls`, `wkr_purge_cache`, `wkr_purge_cache_urls` ja `wkr_is_test_host`.
+- Valikud `wkr_cf_zone` ja `wkr_cf_token` jäävad andmebaasi alles, aga plugin neid enam ei loe ega muuda.
+
 ## 1.20.2 - 2026-11-19
 
 Sisaldab kõike versioonidest 1.20.0 ja 1.20.1 (vaata allpool) ning ühte parandust, mis tuli välja testsaidil.

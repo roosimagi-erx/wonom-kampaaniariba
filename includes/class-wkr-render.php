@@ -1,6 +1,11 @@
 <?php
 /**
- * Riba väljastamine poe esiküljel.
+ * Riba poe esiküljel.
+ *
+ * Lehe HTML-is riba ei ole. Lehel on ainult väike laadija, mis loeb riba
+ * andmefailist (vaata WKR_Data) ja laseb brauseril õige kampaania kellaaja
+ * järgi välja valida. Tänu sellele võib leht seista vahemälus ükskõik kui
+ * kaua: kampaania muutumisel ei ole lehte vaja puutuda.
  *
  * @package Wonom_Kampaaniariba
  */
@@ -10,25 +15,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Renderdab kampaaniariba päisesse ja jalusesse.
+ * Laadija lehe päises, riba HTML andmefaili jaoks ja koodi rakendamine ostukorvis.
  */
 class WKR_Render {
-
-	/**
-	 * Kampaaniad, mis on juba välja trükitud (et lühikood ja haak ei dubleeriks).
-	 *
-	 * @var array<string,bool>
-	 */
-	private static $printed = array();
 
 	/**
 	 * Haagid.
 	 */
 	public static function init() {
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ) );
-		add_action( 'wp_head', array( __CLASS__, 'restore_script' ), 1 );
-		add_action( 'wp_body_open', array( __CLASS__, 'top' ), 5 );
-		add_action( 'wp_footer', array( __CLASS__, 'bottom' ), 5 );
+		add_action( 'wp_head', array( __CLASS__, 'loader' ), 1 );
 		add_shortcode( 'wonom_banner', array( __CLASS__, 'shortcode' ) );
 
 		// WooCommerce: rakenda kood, kui klient jõudis ribalt.
@@ -36,128 +31,57 @@ class WKR_Render {
 	}
 
 	/**
-	 * Stiilid, skript ja vajadusel Google Font.
+	 * Laadija lehe päises.
+	 *
+	 * See on ainus asi, mille plugin lehe HTML-i kirjutab, ja see ei sõltu
+	 * ühestki kampaaniast — seepärast trükitakse see igale lehele ka siis,
+	 * kui parajasti ühtegi kampaaniat ei ole. Laadija:
+	 *
+	 * 1. hoiab päiseriba jaoks ruumi kinni, kui eelmisel lehel oli päiseriba
+	 *    näha (kõrgus on brauseris meeles), et leht ei hüppaks;
+	 * 2. küsib andmefaili. Aadressi lõpus on minutipõhine number, nii et
+	 *    vahemälu annab kõige rohkem minuti vanuse faili;
+	 * 3. võrdleb oma kella serveri omaga (vastuse Date- ja Age-päis), et vale kellaga
+	 *    seade ei näitaks valet kampaaniat;
+	 * 4. laeb riba stiilid ja skripti ainult siis, kui failis on mõni kampaania.
+	 *    Stiili ja skripti aadress tuleb andmefailist, nii et vana vahemälus
+	 *    leht saab alati praeguse versiooni.
+	 *
+	 * Kiirenduspluginad, mis lükkavad JavaScripti edasi, lükkavad ka selle.
+	 * Riba ilmub siis veidi hiljem, aga töötab. Kui tahad, et see jookseks
+	 * kohe, lisa kiirendusplugina väljajätmiste hulka märksõna „wkr-restore”.
 	 */
-	public static function assets() {
-		$active = wkr_active_campaigns();
-		if ( ! $active ) {
+	public static function loader() {
+		if ( is_admin() || is_feed() || is_embed() ) {
 			return;
 		}
 
-		wp_enqueue_style( 'wkr-front', WKR_URL . 'assets/front.css', array(), WKR_VERSION );
-		wp_enqueue_script( 'wkr-front', WKR_URL . 'assets/front.js', array(), WKR_VERSION, true );
-
-		wp_localize_script(
-			'wkr-front',
-			'WKR',
-			array(
-				'pad'  => (int) get_option( 'wkr_body_padding', 1 ),
-				'i18n' => array(
-					'copied' => 'en' === wkr_current_lang() ? 'Copied!' : 'Kopeeritud!',
-					'ends'   => 'en' === wkr_current_lang() ? 'ends in' : 'lõpeb',
-					'days'   => 'en' === wkr_current_lang() ? 'd' : 'p',
-				),
-			)
-		);
-
-		$fonts   = wkr_fonts();
-		$needed  = array();
-		foreach ( $active as $post ) {
-			$key = wkr_get( $post->ID, 'font' );
-			if ( isset( $fonts[ $key ] ) && $fonts[ $key ]['google'] ) {
-				$needed[ $fonts[ $key ]['google'] ] = true;
-			}
-		}
-
-		if ( $needed ) {
-			$url = 'https://fonts.googleapis.com/css2?family=' . implode( '&family=', array_keys( $needed ) ) . '&display=swap';
-			wp_enqueue_style( 'wkr-fonts', $url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
-		}
-	}
-
-	/**
-	 * Millised ribad sellel lehel üldse renderduvad.
-	 *
-	 * @return array<int,array{0:int,1:string,2:int}> Kolmikud [kampaania ID, koht, lõpuaeg].
-	 */
-	private static function slots_on_page() {
-		$slots = array();
-
-		foreach ( array( 'top', 'bottom' ) as $place ) {
-			$post = self::pick( $place );
-			if ( $post ) {
-				$slots[] = array(
-					(int) $post->ID,
-					$place,
-					(int) get_post_meta( $post->ID, '_wkr_end_utc', true ),
-				);
-			}
-		}
-
-		return $slots;
-	}
-
-	/**
-	 * Seab riba oleku paika enne lehe joonistamist.
-	 *
-	 * Kolm asja, mis peavad jooksma <head>-is ja sünkroonselt:
-	 *
-	 * 1. Lõppenud kampaania riba peidetakse. Leht võib olla vahemälus päevi
-	 *    pärast kampaania lõppu — riba ei tohi siis hetkekski vilksatada.
-	 * 2. Varem suletud riba jääb suletuks. Kui see skript jääb hiljaks, jõuab
-	 *    riba enne avatuna ära joonistuda ja alles siis kokku kukkuda.
-	 * 3. Klõps ribal jätab sooduskoodi küpsisesse, et ostukorv saaks selle
-	 *    rakendada. Link ise jääb puhtaks ja leht tuleb vahemälust.
-	 *
-	 * Kiirenduspluginad, mis viivitavad kogu JavaScripti kuni esimese
-	 * kasutaja tegevuseni, lükkavad ka selle edasi. Skript kannab seetõttu
-	 * selget märksõna „wkr-restore”, mille saab nende väljajätmiste hulka lisada.
-	 */
-	public static function restore_script() {
-		if ( is_admin() ) {
+		$url = WKR_Data::url( wkr_current_lang() );
+		if ( '' === $url ) {
 			return;
-		}
-
-		$slots = self::slots_on_page();
-		if ( ! $slots ) {
-			return;
-		}
-
-		$list = array();
-		foreach ( $slots as $slot ) {
-			$list[] = array( (string) $slot[0], $slot[1], (int) $slot[2] );
 		}
 		?>
 <script id="wkr-restore" data-no-optimize="1" data-no-defer="1" data-no-delay="1" data-cfasync="false">
 /* wkr-restore */
-(function(){var s=<?php echo wp_json_encode( $list, JSON_HEX_TAG | JSON_HEX_AMP ); ?>,c="",i,p,n=Math.floor(Date.now()/1000);
-for(i=0;i<s.length;i++){p="#wkr-"+s[i][0]+"-"+s[i][1];
-if(s[i][2]&&n>=s[i][2]){c+=p+"{display:none!important}";continue;}
-try{if(localStorage.getItem("wkr_d_"+s[i][0]+"_"+s[i][1])){c+=p+" .wkr-banner{display:none!important}"+p+" .wkr-mini{display:block!important}";}}catch(e){}}
-if(c){var e=document.createElement("style");e.id="wkr-restore-style";e.textContent=c;(document.head||document.documentElement).appendChild(e);}
-window.wkrApply=1;document.addEventListener("click",function(v){var a=v.target&&v.target.closest?v.target.closest("a[data-wkr-apply]"):null;if(!a){return;}
-var b=a.closest(".wkr-slot"),t=b?parseInt(b.getAttribute("data-wkr-end"),10)||0:0,m=t?Math.max(60,Math.min(259200,t-Math.floor(Date.now()/1000))):259200;
-try{document.cookie="wkr_coupon="+encodeURIComponent(a.getAttribute("data-wkr-apply"))+";path=/;max-age="+m+";SameSite=Lax"+("https:"===location.protocol?";Secure":"");}catch(e){}},true);})();
+(function(w,d){if(w.wkrBoot){return;}var u=<?php echo wp_json_encode( $url, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES ); ?>,b=w.wkrBoot={u:u,off:0,data:null},H=function(){return d.head||d.documentElement;};
+function unreserve(){var r=d.getElementById("wkr-reserve");if(r&&r.parentNode){r.parentNode.removeChild(r);}}
+try{var h=JSON.parse(w.localStorage.getItem("wkr_top")||"null");if(h&&h.h>0&&h.e>Date.now()/1000){var s=d.createElement("style");s.id="wkr-reserve";s.textContent="html{padding-top:"+(+h.h)+"px}";H().appendChild(s);}}catch(e){}
+function run(j,o){b.data=j;b.off=o;if(!j||!j.js||!j.c||!j.c.length){unreserve();if(w.wkrRun){w.wkrRun();}return;}
+if(w.wkrRun){w.wkrRun();return;}if(d.getElementById("wkr-js")){return;}
+if(j.css){var l=d.createElement("link");l.id="wkr-css";l.rel="stylesheet";l.href=j.css;H().appendChild(l);}
+var s=d.createElement("script");s.id="wkr-js";s.async=true;s.src=j.js;H().appendChild(s);}
+b.fetch=function(){try{b.at=Date.now();w.fetch(u+"?wkr="+Math.floor(Date.now()/60000),{credentials:"omit",cache:"no-store"}).then(function(r){var n=Date.now(),t=Date.parse(r.headers.get("date")||""),a=parseInt(r.headers.get("age")||"0",10)||0,o;if(t&&a>0&&Math.abs(t+a*1000-n)<Math.abs(t-n)){t+=a*1000;}o=t?Math.round((t+500-n)/1000):0;return r.json().then(function(j){run(j,o);});})["catch"](unreserve);}catch(e){unreserve();}};
+b.fetch();})(window,document);
 </script>
 		<?php
 	}
 
 	/**
-	 * Päise riba.
-	 */
-	public static function top() {
-		self::output( 'top' );
-	}
-
-	/**
-	 * Jaluse riba.
-	 */
-	public static function bottom() {
-		self::output( 'bottom' );
-	}
-
-	/**
 	 * Lühikood [wonom_banner id="12" position="top"].
+	 *
+	 * Jätab lehele koha, kuhu brauser riba joonistab. ID-ga lühikood näitab
+	 * seda kampaaniat (kui see on eetris), ilma ID-ta lühikood seda, mis
+	 * antud kohta parajasti kuulub.
 	 *
 	 * @param array $atts Atribuudid.
 	 * @return string
@@ -172,57 +96,11 @@ try{document.cookie="wkr_coupon="+encodeURIComponent(a.getAttribute("data-wkr-ap
 			'wonom_banner'
 		);
 
-		$place = 'bottom' === $atts['position'] ? 'bottom' : 'top';
-
-		if ( $atts['id'] ) {
-			$post = get_post( (int) $atts['id'] );
-			if ( ! $post || WKR_CPT !== $post->post_type || 'live' !== wkr_status( $post->ID ) ) {
-				return '';
-			}
-		} else {
-			$post = self::pick( $place );
-			if ( ! $post ) {
-				return '';
-			}
-		}
-
-		return self::markup( $post, $place, true );
-	}
-
-	/**
-	 * Valib esimese sobiva kampaania antud kohta.
-	 *
-	 * @param string $place top | bottom.
-	 * @return WP_Post|null
-	 */
-	private static function pick( $place ) {
-		foreach ( wkr_active_campaigns() as $post ) {
-			$position = wkr_get( $post->ID, 'position' );
-			if ( $position === $place || 'both' === $position ) {
-				return $post;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Trükib riba, kui sinna midagi kuulub.
-	 *
-	 * @param string $place top | bottom.
-	 */
-	private static function output( $place ) {
-		if ( is_admin() || isset( self::$printed[ $place ] ) ) {
-			return;
-		}
-
-		$post = self::pick( $place );
-		if ( ! $post ) {
-			return;
-		}
-
-		self::$printed[ $place ] = true;
-
-		echo self::markup( $post, $place ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- markup() paosüsteem on sees.
+		return sprintf(
+			'<div class="wkr-inline-host" data-wkr-place="%1$s" data-wkr-id="%2$d"></div>',
+			'bottom' === $atts['position'] ? 'bottom' : 'top',
+			absint( $atts['id'] )
+		);
 	}
 
 	/**
@@ -281,7 +159,7 @@ try{document.cookie="wkr_coupon="+encodeURIComponent(a.getAttribute("data-wkr-ap
 		$link = wkr_text( $post->ID, 'link' );
 
 		// Kood ei käi enam lingi külge: parameetriga aadress ei tule vahemälust.
-		// Klõps jätab koodi küpsisesse, vaata restore_script().
+		// Klõps jätab koodi küpsisesse (assets/front.js).
 		$apply = ( $link && $coupon && wkr_get( $post->ID, 'apply_coupon' ) ) ? $coupon : '';
 
 		ob_start();
@@ -349,7 +227,8 @@ try{document.cookie="wkr_coupon="+encodeURIComponent(a.getAttribute("data-wkr-ap
 		 * Siin oli varem iga riba järel oma inline-skript, mis luges suletud
 		 * oleku localStorage'ist. Kiirenduspluginad kirjutasid selle ümber
 		 * välise defer-skriptiga, mille tõttu riba jõudis enne avatuna
-		 * joonistuda. Nüüd teeb seda üks skript <head>-is, vaata restore_script().
+		 * joonistuda. Nüüd paneb riba lehele brauseriskript, mis teab suletud
+		 * olekut juba enne joonistamist.
 		 */
 
 		return trim( ob_get_clean() );

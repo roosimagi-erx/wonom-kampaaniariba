@@ -49,6 +49,8 @@ $wkr_options = array(
 	'wkr_update_json',
 	'wkr_next_handover',
 	'wkr_version',
+	'wkr_data_hash',
+	'wkr_data_info',
 );
 
 foreach ( $wkr_options as $wkr_option ) {
@@ -61,3 +63,20 @@ wp_clear_scheduled_hook( 'wkr_cron_heartbeat' );
 wp_clear_scheduled_hook( 'wkr_url_purge' );
 wp_unschedule_hook( 'wkr_coupon_handover' );
 wp_unschedule_hook( 'wkr_boundary_purge' );
+
+// Riba andmefailid.
+$wkr_uploads = wp_upload_dir( null, false );
+
+if ( empty( $wkr_uploads['error'] ) && ! empty( $wkr_uploads['basedir'] ) ) {
+	$wkr_dir = trailingslashit( $wkr_uploads['basedir'] ) . 'wkr';
+
+	foreach ( (array) glob( $wkr_dir . '/campaigns-*.js*' ) as $wkr_file ) {
+		if ( is_file( $wkr_file ) ) {
+			wp_delete_file( $wkr_file );
+		}
+	}
+
+	if ( is_dir( $wkr_dir ) ) {
+		@rmdir( $wkr_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir, WordPress.PHP.NoSilencedErrors.Discouraged
+	}
+}

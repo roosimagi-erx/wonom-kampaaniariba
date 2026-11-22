@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.20.2
+Stable tag: 1.21.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,10 +30,10 @@ Algus- ja lõpuaeg salvestatakse kohaliku seinakellana koos IANA ajavööndiga n
 teisendatakse salvestamisel Unixi ajatempliks. Nii ei nihku kampaania suve- ja
 talveaja vahetusel ega olene serveri ajavööndist.
 
-Nähtavuse otsustab PHP, mitte JavaScript — leht jääb vahemälusõbralikuks.
-Kampaania lõpus peidab riba kliendi brauser: lühike JS-taimer teeb seda täpsel
-sekundil ka siis, kui leht on vahemälust serveeritud, ja lõppenud riba ei ilmu
-vahemälus olevalt lehelt enam üldse.
+Riba ei ole lehe HTML-i sees. Lehel on väike laadija, mis loeb riba andmefailist,
+ja millist kampaaniat näidata, otsustab kliendi brauser kellaaja järgi. Kampaania
+algab ja lõpeb seetõttu täpsel sekundil ka lehel, mis on vahemälus või kliendil
+juba lahti. Seadme vale kell ei sega: brauser võrdleb oma kella serveri omaga.
 
 = Sulgemine =
 
@@ -106,72 +106,62 @@ Kampaania prügikasti viimisel läheb hallatav kupong mustandiks; taastamisel
 avaldatakse uuesti. Plugina eemaldamisel kuponge ei kustutata, sest need on seotud
 juba tehtud tellimustega.
 
-= Vahemälu =
+= Riba andmefail ja vahemälu =
 
-Riba kirjutatakse lehe HTML-i sisse. See hoiab lehe kiirena, aga tähendab, et
-vahemällu salvestatud leht hoiab riba sellisena, nagu see salvestamise hetkel
-oli. Kogu saidi vahemälu tühjendamine on poele kallis, seetõttu teeb plugin nii
-vähe kui võimalik:
+Plugin ei tühjenda ühtegi vahemälu — ei kampaania salvestamisel, alguses, lõpus
+ega plugina uuendamisel. See ei ole vajalik, sest riba ei ole lehe sees.
 
-* kampaania salvestamisel, prügikasti viimisel ja taastamisel tühjendatakse
-  ainult seadetes loetletud aadressid (kuni 30) — üks kord, umbes 45 sekundit
-  pärast viimast muudatust — ja need laetakse kohe uuesti vahemällu
-* kampaania lõpp ei tühjenda midagi: riba peidab brauser lõpuaja järgi
-* kampaania algus tühjendab ajutiselt veel kõik lehed, ajastatud WP-Cron
-  sündmusega; see kaob järgmises suuremas versioonis
-* plugina uuendamine ei tühjenda midagi
+Kõik eetris olevad ja tulevased kampaaniad kirjutatakse staatilisse faili kaustas
+`wp-content/uploads/wkr/` (üks fail keele kohta, näiteks `campaigns-et.js`). Failis
+on iga kampaania algus- ja lõpuaeg ning valmis HTML. Fail kirjutatakse üle siis,
+kui kampaaniat muudad, ja kord tunnis koristuseks.
 
-Tuntud pluginad: FlyingPress, WP Rocket, LiteSpeed Cache, W3 Total Cache,
-WP Super Cache, WP Fastest Cache, Cache Enabler, SiteGround Optimizer. Seadete
-lehel on kirjas, millised neist poes leiti, viimased tühjendused ja hädaolukorra
-nupp „Tühjenda kogu vahemälu kohe".
+Lehe päises on laadija, mis:
 
-Testsaidil (aadress algab test., staging. või dev. või keskkonna tüüp ei ole
-production) ei tee plugin Cloudflare'i päringuid ja kampaania algus ei tühjenda
-seal kõiki lehti. Seda saab muuta filtriga `wkr_is_test_host`.
+* küsib andmefaili (aadressi lõpus on minutipõhine number, nii et vahemälu annab
+  kõige rohkem minuti vanuse faili)
+* laeb riba stiilid ja skripti ainult siis, kui failis on mõni kampaania
+* hoiab päiseriba jaoks ruumi kinni, kui eelmisel lehel oli päiseriba näha, et
+  leht ei hüppaks
 
-= Cloudflare =
+Mida see annab:
 
-Cloudflare vaikimisi HTML-i ei vahemälusta, ainult staatilisi faile. Kui aga
-poel on Cache Everything reegel või APO, hoiab Cloudflare ka lehe koopiat servas
-ja serveripoolne tühjendus sinna ei ulatu.
+* uus või muudetud kampaania jõuab kõigile lehtedele umbes minutiga, ka keset päeva
+* kampaaniad vahetuvad täpsel sekundil, ilma et server sel hetkel midagi teeks
+* leht võib seista lehe- või CDN-vahemälus ükskõik kui kaua
 
-Kontrolli oma poe päistest: `cf-cache-status: DYNAMIC` tähendab, et HTML-i ei
-vahemälustata ja midagi teha ei ole vaja. `HIT` või `MISS` tähendab, et
-vahemälustatakse.
+Tulevase kampaania sooduskood ei ole andmefailis lihttekstina, vaid kodeeritult,
+et seda ei saaks lihtsa tekstiotsinguga enne algust üles korjata. Kood ise hakkab
+kehtima alles kampaania algusest — seda kontrollib server.
 
-Seadetes on väljad Zone ID ja API token. Token tee Cloudflare'is
-My Profile - API Tokens - Create Token, õigusega Zone - Cache Purge - Purge, ja
-piira see ainult selle domeeni tsooniga. Globaalset API võtit siia panna ei tohi.
+Kiirenduspluginad: kui sinu plugin lükkab JavaScripti edasi või viivitab seda kuni
+külastaja esimese tegevuseni, lisa tema väljajätmiste hulka märksõna `wkr-restore`.
+Ilma selleta riba töötab, aga ilmub hiljem.
 
-Kampaania muutmisel tühjendatakse Cloudflare'is ainult seadetes loetletud
-aadressid. Kampaania algusel tühjendatakse ajutiselt veel kogu tsoon.
+Üleminek versioonilt 1.20 või vanemalt: tühjenda kiirendusplugina lehtede vahemälu
+üks kord pärast uuendust. Varem vahemällu läinud lehtedel on veel vana, lehe sisse
+kirjutatud riba ja laadijat neil ei ole.
 
-Muu vahemälu saab ühendada haakidega:
+Plugina väljalülitamisel kirjutatakse andmefaili tühi nimekiri, nii et riba kaob
+ka vahemälus olevatelt lehtedelt.
 
-`add_action( 'wkr_purge_cache_urls', function ( $urls, $done ) {
-    // oma vahemälu tühjendamine nende aadresside jaoks
-}, 10, 2 );
+Andmefaili sisu saab muuta filtriga:
 
-add_action( 'wkr_purge_cache', function ( $done ) {
-    // kõigi lehtede tühjendus kampaania algusel
-} );`
+`add_filter( 'wkr_data', function ( $data, $lang ) {
+    return $data;
+}, 10, 2 );`
 
-Kampaania alguse tühjendus sõltub WP-Cronist, mis WordPressis käivitub
-lehekülastuste pealt. Tugevalt vahemälustatud poes ei pruugi külastus PHP-ni
-jõuda, seetõttu tasub seadistada serveris päris cron-töö, mis käivitab
-wp-cron.php iga paari minuti tagant. Seadete leht ajastab ise tunnise pulsi ja näitab, millal cron viimati käivitus. Nii on kohe näha, kas seadistus toimib.
-
-Staatiliste failide pärast muretsema ei pea: CSS-i ja JS-i aadressis on plugina
-versiooninumber, seega uuendus toob brauserisse uued failid ise.
+WP-Cron: riba ise cronist ei sõltu. Cron teeb kord tunnis koristust ja annab
+broneeritud sooduskoodi alguse hetkel üle (kui cron hilineb, teeb seda esimene
+päring poodi). Seadete leht näitab, millal cron viimati käivitus.
 
 == Installation ==
 
 1. Laadi ZIP üles: Pluginad - Lisa uus - Laadi plugin üles.
 2. Aktiveeri.
 3. Menüüs tekib „Wonom kampaaniad". Lisa esimene kampaania.
-4. Riba ilmub automaatselt. Kui teema ei kasuta wp_body_open haaki, paiguta
-   riba lühikoodiga `[wonom_banner position="top"]`.
+4. Riba ilmub automaatselt. Kui tahad riba lehe sisse kindlasse kohta, kasuta
+   lühikoodi `[wonom_banner position="top"]`.
 
 == Frequently Asked Questions ==
 
@@ -183,8 +173,9 @@ modaalaknad kihil 400-600; riba vaikeväärtus 90 jääb nendest allapoole.
 = Riba ei ilmu =
 
 Kontrolli, et kampaania on avaldatud (publish), „Kampaania sisse lülitatud" on
-märgitud ning praegune aeg jääb algus- ja lõpuaja vahele. Kui teema ei kutsu
-wp_body_open haaki, kasuta lühikoodi.
+märgitud ning praegune aeg jääb algus- ja lõpuaja vahele. Vaata ka Seaded →
+Riba andmefail: fail peab olemas olema. Kui uuendasid vanemalt versioonilt,
+tühjenda kiirendusplugina lehtede vahemälu üks kord.
 
 = Kuidas teha olemasolevast kampaaniast koopia? =
 
@@ -248,6 +239,18 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.21.0 =
+* Riba ei kirjutata enam lehe HTML-i sisse. Kõik eetris olevad ja tulevased kampaaniad on staatilises andmefailis (wp-content/uploads/wkr/, üks fail keele kohta) ja lehel olev laadija loeb riba sealt.
+* Kampaania algab ja lõpeb täpsel sekundil kõigil lehtedel korraga, ka vahemälus ja kliendil lahti olevatel. Samal sekundil lõppev ja algav kampaania vahetuvad koha peal.
+* Kampaania salvestamine kirjutab üle ainult andmefaili; muudatus jõuab kõigile lehtedele umbes minutiga.
+* Plugin ei tühjenda enam ühtegi vahemälu. Ära jäid aadresside tühjendus, alguse täistühjendus, nupp „Tühjenda kogu vahemälu kohe”, seade „Automaatne tühjendamine” ning Cloudflare'i väljad ja päringud.
+* Brauser võrdleb oma kella serveri omaga, nii et vale kellaga seade ei näita valet kampaaniat.
+* Jaluseriba libiseb sisse; päiseriba jaoks hoitakse ruum kinni, kui eelmisel lehel oli päiseriba näha.
+* Stiilid ja skript laetakse ainult siis, kui mõni kampaania on olemas, ja alati plugina praeguses versioonis.
+* Sooduskood on andmefailis kodeeritult, mitte lihttekstina.
+* Plugina väljalülitamisel kaob riba ka vahemälus olevatelt lehtedelt.
+* NB! Pärast uuendust tühjenda kiirendusplugina lehtede vahemälu üks kord (FlyingPressis „Purge pages”). Varem vahemällu läinud lehtedel on veel vana riba ja laadijat neil ei ole.
 
 = 1.20.2 =
 * Parandus: mitmekeelses poes (WPML, Polylang) kirjutati tühjendatavate aadresside nimekirjas teise keele rajad jooksva keele järgi ümber, nii et ingliskeelsed lehed jäid kampaania salvestamisel tühjendamata. Rada võetakse nüüd täpselt sellisena, nagu see nimekirjas on.
