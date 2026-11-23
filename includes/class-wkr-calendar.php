@@ -142,12 +142,16 @@ class WKR_Calendar {
 							$start = (int) get_post_meta( $campaign->ID, '_wkr_start_utc', true );
 							$end   = (int) get_post_meta( $campaign->ID, '_wkr_end_utc', true );
 
-							if ( ! $start || ! $end || $start >= $day_end || $end < $day_start ) {
+							/*
+							 * Lõpuhetk ise enam kampaania sisse ei kuulu (nagu ribal ja
+							 * sooduskoodil): kell 00:00 lõppev kampaania ei ole sel päeval eetris.
+							 */
+							if ( ! $start || ! $end || $start >= $day_end || $end <= $day_start ) {
 								continue;
 							}
 
 							$bg     = wkr_get( $campaign->ID, 'bg' );
-							$faded  = ( $end < $now || ! wkr_get( $campaign->ID, 'enabled' ) ) ? ' is-dim' : '';
+							$faded  = ( $end <= $now || ! wkr_get( $campaign->ID, 'enabled' ) ) ? ' is-dim' : '';
 							$link   = get_edit_post_link( $campaign->ID );
 							?>
 							<a class="wkr-cal-bar<?php echo esc_attr( $faded ); ?>"

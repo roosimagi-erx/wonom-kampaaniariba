@@ -1,5 +1,14 @@
 # Muudatuste logi
 
+## 1.21.1 - 2026-11-23
+
+### Kalender ei näita enam kell 00:00 lõppevat kampaaniat järgmisel päeval
+
+- **Kalender.** Kampaania, mille lõpp on näiteks 26.11 kell 00:00, kehtib 25.11 lõpuni. Kalender näitas seda seni ka 26.11 lahtris. Nüüd loeb kalender lõpuhetke samamoodi nagu riba ja sooduskood: lõpuhetk ise enam kampaania sisse ei kuulu.
+- **Selgitus välja „Lõpeb” all.** Kui kampaania peab kestma päeva lõpuni, pane lõpuks järgmine kuupäev kell 00:00. Riba ja sooduskood kehtivad siis kuni 23:59:59 ja järgmine kampaania võib alata samal hetkel, ilma ribata minutita vahepeal.
+
+Riba, sooduskoodi ja andmefaili töö ei muutunud. Vahemälu ei ole vaja tühjendada.
+
 ## 1.21.0 - 2026-11-22
 
 ### Riba tuleb andmefailist — vahemälu ei tühjendata enam kunagi

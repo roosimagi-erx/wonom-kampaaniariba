@@ -717,6 +717,9 @@ class WKR_Meta {
 				<input type="text" id="wkr_end" name="wkr[end_local]" class="wkr-date"
 					value="<?php echo esc_attr( wkr_pretty( $end ) ); ?>" placeholder="pp.kk.aaaa hh:mm" autocomplete="off">
 			</span>
+			<span class="wkr-hint">
+				<?php esc_html_e( 'Riba ja sooduskood kehtivad kuni selle hetkeni; hetk ise enam sisse ei kuulu. Kui kampaania peab kestma päeva lõpuni, pane lõpuks järgmine kuupäev kell 00:00 (näiteks 25.11 lõpuni kehtiv kampaania lõpeb 26.11 kell 00:00). Järgmine kampaania võib alata samal hetkel.', 'wonom-kampaaniariba' ); ?>
+			</span>
 		</p>
 		<p class="wkr-field">
 			<label for="wkr_tz"><?php esc_html_e( 'Ajavöönd', 'wonom-kampaaniariba' ); ?></label>

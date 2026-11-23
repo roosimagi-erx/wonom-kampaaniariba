@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.21.0
+Stable tag: 1.21.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -239,6 +239,10 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.21.1 =
+* Kalender ei näita enam kell 00:00 lõppevat kampaaniat järgmise päeva lahtris. Lõpuhetk ise kampaania sisse ei kuulu, nagu ribal ja sooduskoodil.
+* Välja „Lõpeb” all on selgitus: päeva lõpuni kestva kampaania lõpuks pane järgmine kuupäev kell 00:00.
 
 = 1.21.0 =
 * Riba ei kirjutata enam lehe HTML-i sisse. Kõik eetris olevad ja tulevased kampaaniad on staatilises andmefailis (wp-content/uploads/wkr/, üks fail keele kohta) ja lehel olev laadija loeb riba sealt.
