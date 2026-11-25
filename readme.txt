@@ -4,7 +4,7 @@ Tags: woocommerce, banner, campaign, coupon, promotion
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.21.1
+Stable tag: 1.22.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -239,6 +239,13 @@ JavaScript keelatud või midagi ei laadinud, viib sama nupp WordPressi tavalisel
 uuendusekraanile, kus uuendus samuti ära tehakse.
 
 == Changelog ==
+
+= 1.22.0 =
+* Sooduskoodil võib olla ribast erinev kehtivusaeg: uued väljad „Kood kehtib alates” ja „Kood kehtib kuni”. Tühi väli = sama aeg mis ribal.
+* Prügikasti visatud kampaania ei hoia enam kupongi kinni. Prügikasti saatmisel küsitakse, kas kood jääb kehtima või läheb mustandiks.
+* Valik „Ainult näitan koodi ribal” annab hallatud kupongi salvestamisel päriselt WooCommerce'ile tagasi.
+* WooCommerce'i kupongi lehel on teade, kui kupongi haldab kampaania, koos nupuga „Anna kupong WooCommerce'ile tagasi”.
+* Broneeritud kood liigub uuele kampaaniale selle koodi alguse hetkel.
 
 = 1.21.1 =
 * Kalender ei näita enam kell 00:00 lõppevat kampaaniat järgmise päeva lahtris. Lõpuhetk ise kampaania sisse ei kuulu, nagu ribal ja sooduskoodil.

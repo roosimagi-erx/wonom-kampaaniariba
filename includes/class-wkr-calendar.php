@@ -200,7 +200,28 @@ class WKR_Calendar {
 							<td><?php echo esc_html( wkr_pretty( wkr_get( $campaign->ID, 'start_local' ) ) ); ?></td>
 							<td><?php echo esc_html( wkr_pretty( wkr_get( $campaign->ID, 'end_local' ) ) ); ?></td>
 							<td><?php echo esc_html( wkr_get( $campaign->ID, 'tz' ) ); ?></td>
-							<td><?php echo wkr_get( $campaign->ID, 'coupon' ) ? '<code>' . esc_html( wkr_get( $campaign->ID, 'coupon' ) ) . '</code>' : '—'; ?></td>
+							<td>
+								<?php
+								echo wkr_get( $campaign->ID, 'coupon' ) ? '<code>' . esc_html( wkr_get( $campaign->ID, 'coupon' ) ) . '</code>' : '—';
+
+								// Koodi oma kehtivusaeg, kui see erineb riba ajast.
+								$code_window = wkr_code_window( $campaign->ID );
+
+								if ( $code_window['custom'] && 'manage' === wkr_get( $campaign->ID, 'wc_mode' ) && wkr_get( $campaign->ID, 'coupon' ) ) {
+									printf(
+										'<br><span class="wkr-tz">%s</span>',
+										esc_html(
+											sprintf(
+												/* translators: 1: code validity start, 2: code validity end */
+												__( 'kood kehtib %1$s → %2$s', 'wonom-kampaaniariba' ),
+												wkr_pretty( $code_window['start_local'] ),
+												wkr_pretty( $code_window['end_local'] )
+											)
+										)
+									);
+								}
+								?>
+							</td>
 							<td><span class="wkr-pill wkr-pill--<?php echo esc_attr( $status ); ?>"><?php echo esc_html( $labels[ $status ] ); ?></span></td>
 						</tr>
 					<?php endforeach; ?>

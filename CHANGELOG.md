@@ -1,5 +1,36 @@
 # Muudatuste logi
 
+## 1.22.0 - 2026-11-25
+
+### Sooduskoodil võib olla ribast erinev kehtivusaeg
+
+Seni kehtis hallatav kood täpselt sama kaua, kui riba oli eetris. Nüüd saab koodile panna oma alguse ja lõpu — näiteks nii, et uudiskirja saajad saavad koodi kasutada juba eelmisel õhtul, aga riba ilmub lehele alles südaööl.
+
+- **Uued väljad „Kood kehtib alates” ja „Kood kehtib kuni”** kampaania WooCommerce'i osas (nähtavad, kui plugin haldab kupongi). Tühi väli tähendab sama aega mis ribal, nii et olemasolevad kampaaniad töötavad muutmata edasi. Lõpuhetk ise enam sisse ei kuulu, nagu ribalgi.
+- **Riba näitamist need väljad ei muuda.** Riba algab ja lõpeb endiselt väljade „Algab” ja „Lõpeb” järgi.
+- **Kupongi aegumiskuupäev** WooCommerce'is tuleb nüüd koodi lõpuajast.
+- **Broneeritud kood** liigub uuele kampaaniale selle koodi alguse hetkel, mitte riba alguse hetkel.
+- **Hoiatus salvestamisel**, kui riba on eetris ka ajal, mil kood ei kehti, või kui koodi lõpp ei ole algusest hiljem.
+- Kampaaniate nimekirjas ja kalendri ajakavas on koodi oma kehtivusaeg näha koodi all.
+
+### Prügikasti visatud kampaania ei hoia enam kupongi kinni
+
+Viga: kui kupongi haldav kampaania visati prügikasti, jäi kupong selle kampaania külge ja kood ei kehtinud enam kusagil — ka siis, kui kupong WooCommerce'is uuesti avaldati. Vabanes see alles kampaania jäädaval kustutamisel.
+
+- **Prügikastis olev kampaania ei loe enam kupongi omanikuks.** See parandab ka kupongid, mis jäid kinni varasema versiooniga.
+- **Prügikasti saatmisel küsitakse**, mis saab koodist: „Kood jääb kehtima” (kupong läheb tagasi WooCommerce'i hallata, aegumiskuupäev jääb alles) või „Kood ei kehti enam” (kupong pannakse mustandiks). Kui küsimust ei saa näidata, jääb kood kehtima.
+- **Taastatud kampaania** on mustand ega võta töötavat koodi kohe tagasi. Sama kupongi võtab ta enda alla siis, kui kampaania uuesti salvestatakse; teist sama koodiga kupongi ei teki.
+- Pärast prügikasti saatmist ütleb teade, mis seisus kupong nüüd on.
+
+### Kupongi saab WooCommerce'ile tagasi anda
+
+Viga: kui kampaania oli kupongi korra enda hallata võtnud, piiras plugin koodi kehtivust edasi ka siis, kui valik muudeti tagasi „Ainult näitan koodi ribal”.
+
+- **Valik „Ainult näitan koodi ribal” ja salvestus** annab kupongi nüüd päriselt tagasi: plugin seda enam ei muuda ega piira. Teade ütleb, kas ja kui kaua kood WooCommerce'i enda seadete järgi kehtib.
+- **Teade WooCommerce'i kupongi lehel.** Kui kupongi haldab kampaania, on kupongi muutmise lehel kirjas, milline kampaania seda teeb, millal kood kehtib ja et kampaania salvestamine kirjutab kupongi seaded üle. Samas on nupud „Ava kampaania” ja „Anna kupong WooCommerce'ile tagasi”.
+
+Riba, andmefail ja lehtede vahemälu ei muutunud. Pärast uuendust ei ole vaja midagi tühjendada.
+
 ## 1.21.1 - 2026-11-23
 
 ### Kalender ei näita enam kell 00:00 lõppevat kampaaniat järgmisel päeval

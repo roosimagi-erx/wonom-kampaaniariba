@@ -127,7 +127,13 @@ class WKR_Post_Type {
 		 * WooCommerce'i kupongi haarata ega muuta enne, kui inimene on need
 		 * seaded üle vaadanud.
 		 */
-		$skip = array( '_wkr_coupon_id', '_wkr_wc_takeover' );
+		$skip = array(
+			'_wkr_coupon_id',
+			'_wkr_wc_takeover',
+			WKR_Coupon::RELEASED_META,
+			WKR_Coupon::CLAIM_META,
+			WKR_Coupon::CLAIM_RESET_META,
+		);
 
 		foreach ( get_post_meta( $id ) as $key => $values ) {
 			if ( strpos( $key, '_wkr_' ) !== 0 || in_array( $key, $skip, true ) ) {
@@ -264,7 +270,36 @@ class WKR_Post_Type {
 
 		if ( 'wkr_coupon' === $col ) {
 			$coupon = wkr_get( $post_id, 'coupon' );
-			echo $coupon ? '<code>' . esc_html( $coupon ) . '</code>' : '—';
+
+			if ( ! $coupon ) {
+				echo '—';
+				return;
+			}
+
+			// Märge ütleb prügikasti dialoogile, et see kampaania haldab kupongi.
+			$owned = 'trash' !== get_post_status( $post_id ) && WKR_Coupon::owned_id( $post_id );
+
+			printf(
+				'<code%1$s>%2$s</code>',
+				$owned ? ' data-wkr-owned="' . esc_attr( $coupon ) . '"' : '',
+				esc_html( $coupon )
+			);
+
+			$window = wkr_code_window( $post_id );
+
+			if ( $owned && $window['custom'] ) {
+				printf(
+					'<br><span class="wkr-tz">%s</span>',
+					esc_html(
+						sprintf(
+							/* translators: 1: code validity start, 2: code validity end */
+							__( 'kood kehtib %1$s → %2$s', 'wonom-kampaaniariba' ),
+							wkr_pretty( $window['start_local'] ),
+							wkr_pretty( $window['end_local'] )
+						)
+					)
+				);
+			}
 		}
 	}
 }

@@ -36,6 +36,13 @@ class WKR_Coupon {
 	const CLAIM_RESET_META = '_wkr_wc_claim_reset';
 
 	/**
+	 * Kampaania külge jääv märge: prügikasti minnes vabastati see kupong.
+	 * Kui kampaania taastatakse ja uuesti salvestatakse, võtab ta sama kupongi
+	 * ilma küsimata tagasi. Väärtus: array( 'coupon' => ID, 'drafted' => 0|1 ).
+	 */
+	const RELEASED_META = '_wkr_released_coupon';
+
+	/**
 	 * Ajastatud üleandmise sündmus.
 	 */
 	const CRON_HOOK = 'wkr_coupon_handover';
@@ -54,6 +61,9 @@ class WKR_Coupon {
 		add_filter( 'woocommerce_coupon_is_valid', array( __CLASS__, 'validate' ), 10, 2 );
 		add_action( 'trashed_post', array( __CLASS__, 'on_trash' ) );
 		add_action( 'untrashed_post', array( __CLASS__, 'on_untrash' ) );
+		add_action( 'before_delete_post', array( __CLASS__, 'on_delete' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'coupon_screen_notice' ) );
+		add_action( 'admin_post_wkr_release_coupon', array( __CLASS__, 'handle_release' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notice' ) );
 
 		add_action( self::CRON_HOOK, array( __CLASS__, 'handover' ) );
@@ -124,7 +134,9 @@ class WKR_Coupon {
 	 * Kupongi haldav kampaania, kui see veel olemas on.
 	 *
 	 * Kustutatud kampaania jätab kupongile rippuva märke. Sellist kupongi
-	 * koheldakse nagu käsitsi tehtut, muidu jääks kood igaveseks lukku.
+	 * koheldakse nagu käsitsi tehtut, muidu jääks kood igaveseks lukku. Sama
+	 * käib prügikastis oleva kampaania kohta: ta ei ole eetris ega saa sinna
+	 * minna, nii et koodi ta kinni hoida ei tohi.
 	 *
 	 * @param int $coupon_id Kupongi ID.
 	 * @return int Kampaania ID või 0.
@@ -132,11 +144,36 @@ class WKR_Coupon {
 	public static function owner_campaign( $coupon_id ) {
 		$owner = (int) get_post_meta( $coupon_id, self::OWNER_META, true );
 
-		if ( ! $owner || WKR_CPT !== get_post_type( $owner ) ) {
+		if ( ! $owner || WKR_CPT !== get_post_type( $owner ) || 'trash' === get_post_status( $owner ) ) {
 			return 0;
 		}
 
 		return $owner;
+	}
+
+	/**
+	 * Hetk, millest alates kampaania kood kehtib (ajatempel).
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 * @return int
+	 */
+	public static function code_start( $campaign_id ) {
+		$window = wkr_code_window( $campaign_id );
+
+		return (int) $window['start'];
+	}
+
+	/**
+	 * Koodi algus või lõpp kohaliku seinakellana ("Y-m-d H:i").
+	 *
+	 * @param int    $campaign_id Kampaania ID.
+	 * @param string $edge        start | end.
+	 * @return string
+	 */
+	public static function code_local( $campaign_id, $edge ) {
+		$window = wkr_code_window( $campaign_id );
+
+		return 'end' === $edge ? $window['end_local'] : $window['start_local'];
 	}
 
 	/**
@@ -162,7 +199,8 @@ class WKR_Coupon {
 	}
 
 	/**
-	 * Paneb kampaania alguse hetkele üleandmise sündmuse.
+	 * Paneb koodi alguse hetkele üleandmise sündmuse. Koodi algus on riba
+	 * algus, kui kampaanial ei ole koodile oma aega pandud.
 	 *
 	 * Kutsutakse igal salvestusel, nii et kuupäeva muutmine liigutab ka
 	 * üleandmise kaasa.
@@ -173,7 +211,7 @@ class WKR_Coupon {
 		self::unschedule_claim( $campaign_id );
 
 		if ( self::has_claim( $campaign_id ) ) {
-			$start = (int) get_post_meta( $campaign_id, '_wkr_start_utc', true );
+			$start = self::code_start( $campaign_id );
 
 			if ( $start > time() ) {
 				// Paar sekundit hiljem, et kampaania oleks selleks hetkeks juba eetris.
@@ -227,7 +265,7 @@ class WKR_Coupon {
 		$next = 0;
 
 		foreach ( self::claimed_campaigns() as $id ) {
-			$start = (int) get_post_meta( $id, '_wkr_start_utc', true );
+			$start = self::code_start( $id );
 
 			if ( $start && ( ! $next || $start < $next ) ) {
 				$next = $start;
@@ -250,7 +288,7 @@ class WKR_Coupon {
 		$now  = time();
 
 		foreach ( self::claimed_campaigns() as $id ) {
-			$start = (int) get_post_meta( $id, '_wkr_start_utc', true );
+			$start = self::code_start( $id );
 
 			if ( $start && $start <= $now ) {
 				self::do_handover( $id );
@@ -311,11 +349,11 @@ class WKR_Coupon {
 		self::unschedule_claim( $campaign_id );
 
 		/*
-		 * Koodi võtab üle ainult kampaania, kes päriselt eetrisse läks.
-		 * Mustand, välja lülitatud või juba lõppenud kampaania ei tohi
-		 * töötavat koodi endale kaasa viia.
+		 * Koodi võtab üle ainult kampaania, kelle kood päriselt kehtima
+		 * hakkas. Mustand, välja lülitatud või juba lõppenud kampaania ei
+		 * tohi töötavat koodi endale kaasa viia.
 		 */
-		if ( 'live' !== wkr_status( $campaign_id ) ) {
+		if ( 'live' !== wkr_code_status( $campaign_id ) ) {
 			delete_post_meta( $campaign_id, self::CLAIM_RESET_META );
 			return;
 		}
@@ -529,7 +567,7 @@ class WKR_Coupon {
 				$out['note']      = sprintf(
 					/* translators: 1: start time, 2: campaign title */
 					__( 'Kood on broneeritud: %1$s läheb see üle kampaaniale „%2$s” ja lakkab siin kehtimast.', 'wonom-kampaaniariba' ),
-					wkr_pretty( wkr_get( $heir, 'start_local' ) ),
+					wkr_pretty( self::code_local( $heir, 'start' ) ),
 					get_the_title( $heir )
 				);
 			}
@@ -543,8 +581,8 @@ class WKR_Coupon {
 			$out['pill']  = 'upcoming';
 			$out['label'] = sprintf(
 				/* translators: %s: start time */
-				__( 'Kood on broneeritud — liigub siia %s, kui kampaania algab', 'wonom-kampaaniariba' ),
-				wkr_pretty( wkr_get( $campaign_id, 'start_local' ) )
+				__( 'Kood on broneeritud — liigub siia %s, kui koodi aeg algab', 'wonom-kampaaniariba' ),
+				wkr_pretty( self::code_local( $campaign_id, 'start' ) )
 			);
 
 			if ( $owner ) {
@@ -558,12 +596,24 @@ class WKR_Coupon {
 			return $out;
 		}
 
+		// Kupong oli selle kampaania oma, kuni kampaania prügikastis käis.
+		// Salvestamine võtab selle ilma linnukeseta tagasi.
+		$released = get_post_meta( $campaign_id, self::RELEASED_META, true );
+
+		if ( ! $owner && is_array( $released ) && (int) $released['coupon'] === $existing ) {
+			$out['state'] = 'returning';
+			$out['pill']  = 'upcoming';
+			$out['label'] = __( 'Kupong on olemas — see kampaania võtab selle salvestamisel uuesti enda hallata', 'wonom-kampaaniariba' );
+
+			return $out;
+		}
+
 		// Olemasolevat koodi saab alati üle võtta — nii saab sama koodi
 		// kampaaniast kampaaniasse edasi anda, ilma uut välja mõtlemata.
 		$out['takeover'] = true;
 
 		if ( $owner ) {
-			$other = wkr_status( $owner );
+			$other = wkr_code_status( $owner );
 			$title = get_the_title( $owner );
 
 			$out['state'] = 'other';
@@ -574,7 +624,7 @@ class WKR_Coupon {
 				$title
 			);
 
-			$my_start = (int) get_post_meta( $campaign_id, '_wkr_start_utc', true );
+			$my_start = self::code_start( $campaign_id );
 
 			if ( $my_start > time() ) {
 				/*
@@ -583,20 +633,21 @@ class WKR_Coupon {
 				 */
 				$out['takeover_text'] = sprintf(
 					/* translators: 1: start time, 2: campaign title */
-					__( 'Kood ei liigu kohe: see broneeritakse ja tuleb siia %1$s, kui kampaania algab. Kuni selle ajani töötab kood kampaanias „%2$s” edasi.', 'wonom-kampaaniariba' ),
-					wkr_pretty( wkr_get( $campaign_id, 'start_local' ) ),
+					__( 'Kood ei liigu kohe: see broneeritakse ja tuleb siia %1$s, kui selle kampaania koodi aeg algab. Kuni selle ajani töötab kood kampaanias „%2$s” edasi.', 'wonom-kampaaniariba' ),
+					wkr_pretty( self::code_local( $campaign_id, 'start' ) ),
 					$title
 				);
 
 				// Kattumise korral võidab hilisem algus — see tasub välja öelda.
-				$other_end = (int) get_post_meta( $owner, '_wkr_end_utc', true );
+				$other_window = wkr_code_window( $owner );
+				$other_end    = (int) $other_window['end'];
 
 				if ( $other_end > $my_start ) {
 					$out['takeover_text'] .= ' ' . sprintf(
 						/* translators: 1: campaign title, 2: that campaign's end time */
-						__( 'NB! Kampaaniad kattuvad: „%1$s” kestab %2$s-ni, aga kood lakkab seal kehtimast juba siis, kui see kampaania algab.', 'wonom-kampaaniariba' ),
+						__( 'NB! Koodi ajad kattuvad: kampaanias „%1$s” kehtiks kood %2$s-ni, aga see lakkab seal kehtimast juba siis, kui selle kampaania koodi aeg algab.', 'wonom-kampaaniariba' ),
 						$title,
-						wkr_pretty( wkr_get( $owner, 'end_local' ) )
+						wkr_pretty( $other_window['end_local'] )
 					);
 				}
 			} elseif ( 'live' === $other || 'upcoming' === $other ) {
@@ -677,6 +728,23 @@ class WKR_Coupon {
 			// Ilma halduseta ei ole ka broneeringul mõtet.
 			self::forget_claim( $campaign_id );
 
+			/*
+			 * Kampaania haldas kupongi ja kasutaja valis nüüd „Ainult näitan
+			 * koodi ribal”. Siis peab kupong päriselt WooCommerce'ile tagasi
+			 * minema — muidu piiraks plugin koodi kehtivust edasi, kuigi
+			 * vormis seisab, et ta seda ei halda.
+			 */
+			$released = self::release( $campaign_id );
+
+			if ( $released ) {
+				return array(
+					'status'    => 'ok',
+					'level'     => 'success',
+					'message'   => self::released_text( $released ),
+					'coupon_id' => $released,
+				);
+			}
+
 			// Linnuke ilma halduseta ei tee midagi — ütleme seda, mitte ei vaiki.
 			return array(
 				'status'    => $takeover || $reset ? 'conflict' : 'skipped',
@@ -709,12 +777,37 @@ class WKR_Coupon {
 
 		$took_over_from = '';
 
+		/*
+		 * Prügikasti minnes mustandiks pandud kupongi WooCommerce koodi järgi
+		 * üles ei leia (ta otsib ainult avaldatuid). Ilma selleta tekiks
+		 * taastatud kampaania salvestamisel sama koodiga teine kupong.
+		 */
+		$released = get_post_meta( $campaign_id, self::RELEASED_META, true );
+
+		if ( ! $owned_id && ! $existing_id && is_array( $released ) && ! empty( $released['drafted'] ) ) {
+			$candidate = (int) $released['coupon'];
+
+			if (
+				'shop_coupon' === get_post_type( $candidate )
+				&& 'draft' === get_post_status( $candidate )
+				&& ! get_post_meta( $candidate, self::OWNER_META, true )
+				&& self::format_code( get_the_title( $candidate ) ) === $code
+			) {
+				$owned_id = $candidate;
+			}
+		}
+
 		// Sama koodiga kupong on juba olemas ja see pole meie oma.
 		if ( $existing_id && $existing_id !== $owned_id ) {
 			$owner = self::owner_campaign( $existing_id );
 
+			// Kupong oli meie oma, kuni kampaania prügikasti läks, ja keegi teine
+			// ei ole seda vahepeal endale võtnud — siis ei ole vaja luba küsida.
+			$released = get_post_meta( $campaign_id, self::RELEASED_META, true );
+			$was_ours = is_array( $released ) && ! $owner && (int) $released['coupon'] === $existing_id;
+
 			// Märge näitab juba meile — viide oli lihtsalt kaduma läinud.
-			if ( $owner === (int) $campaign_id ) {
+			if ( $owner === (int) $campaign_id || $was_ours ) {
 				$owner = 0;
 			} elseif ( ! $takeover && ! self::has_claim( $campaign_id ) ) {
 				// Juba broneerinud kampaania ei pea linnukest iga salvestusega uuesti märkima.
@@ -743,7 +836,7 @@ class WKR_Coupon {
 			 * koodi sealsamas ära. Selle asemel paneme broneeringu ja anname
 			 * kupongi üle alles siis, kui see kampaania päriselt algab.
 			 */
-			$start = (int) get_post_meta( $campaign_id, '_wkr_start_utc', true );
+			$start = self::code_start( $campaign_id );
 
 			if ( ! $force_takeover && $owner && $start > time() ) {
 				update_post_meta( $campaign_id, self::CLAIM_META, 1 );
@@ -761,9 +854,9 @@ class WKR_Coupon {
 					'level'     => 'success',
 					'message'   => sprintf(
 						/* translators: 1: coupon code, 2: start time, 3: current owner campaign */
-						__( 'Kood „%1$s” on broneeritud. See liigub siia %2$s, kui kampaania algab. Seni jääb kood kampaaniale „%3$s” ja töötab seal edasi.', 'wonom-kampaaniariba' ),
+						__( 'Kood „%1$s” on broneeritud. See liigub siia %2$s, kui selle kampaania koodi aeg algab. Seni jääb kood kampaaniale „%3$s” ja töötab seal edasi.', 'wonom-kampaaniariba' ),
 						$code,
-						wkr_pretty( wkr_get( $campaign_id, 'start_local' ) ),
+						wkr_pretty( self::code_local( $campaign_id, 'start' ) ),
 						get_the_title( $owner )
 					) . ( get_post_meta( $campaign_id, self::CLAIM_RESET_META, true )
 						? ' ' . __( 'Kasutuskordade loendur nullitakse samal hetkel, kui kood üle tuleb.', 'wonom-kampaaniariba' )
@@ -784,8 +877,9 @@ class WKR_Coupon {
 
 		$coupon = $owned_id ? new WC_Coupon( $owned_id ) : new WC_Coupon();
 
-		$type = 'fixed_cart' === wkr_get( $campaign_id, 'wc_type' ) ? 'fixed_cart' : 'percent';
-		$end  = (int) get_post_meta( $campaign_id, '_wkr_end_utc', true );
+		$type   = 'fixed_cart' === wkr_get( $campaign_id, 'wc_type' ) ? 'fixed_cart' : 'percent';
+		$window = wkr_code_window( $campaign_id );
+		$end    = (int) $window['end'];
 
 		$coupon->set_code( $code );
 		$coupon->set_discount_type( $type );
@@ -841,8 +935,8 @@ class WKR_Coupon {
 			$coupon->set_excluded_product_categories( $exclude_cats );
 		}
 
-		// Aegumine tuleb kampaania lõpuajast. Nii näeb klient pärast kampaaniat
-		// WooCommerce'i enda teadet „kupong on aegunud”, mitte „koodi ei ole”.
+		// Aegumine tuleb koodi lõpuajast (vaikimisi riba lõpp). Nii näeb klient pärast
+		// seda WooCommerce'i enda teadet „kupong on aegunud”, mitte „koodi ei ole”.
 		$coupon->set_date_expires( $end ? $end : null );
 
 		try {
@@ -866,6 +960,22 @@ class WKR_Coupon {
 		update_post_meta( $coupon_id, self::OWNER_META, (int) $campaign_id );
 		update_post_meta( $campaign_id, '_wkr_coupon_id', (int) $coupon_id );
 
+		// Prügikasti minnes mustandiks pandud kupong hakkab koos kampaaniaga uuesti tööle.
+		$released = get_post_meta( $campaign_id, self::RELEASED_META, true );
+
+		if ( is_array( $released ) ) {
+			if ( (int) $released['coupon'] === (int) $coupon_id && ! empty( $released['drafted'] ) && 'draft' === get_post_status( $coupon_id ) ) {
+				wp_update_post(
+					array(
+						'ID'          => $coupon_id,
+						'post_status' => 'publish',
+					)
+				);
+			}
+
+			delete_post_meta( $campaign_id, self::RELEASED_META );
+		}
+
 		delete_post_meta( $campaign_id, self::CLAIM_RESET_META );
 
 		// Kood on käes — broneeringut enam vaja ei ole.
@@ -876,6 +986,13 @@ class WKR_Coupon {
 
 		$parts = array();
 		$level = 'success';
+
+		$window_note = self::window_note( $campaign_id );
+
+		if ( $window_note ) {
+			$parts[] = $window_note['message'];
+			$level   = $window_note['level'];
+		}
 
 		if ( $took_over_from ) {
 			$parts[] = sprintf(
@@ -923,10 +1040,11 @@ class WKR_Coupon {
 	}
 
 	/**
-	 * Kupong kehtib ainult siis, kui tema kampaania on eetris.
+	 * Kupong kehtib ainult siis, kui tema kampaania koodi aeg on käes.
 	 *
 	 * See on tähtsam kui aegumiskuupäev: WooCommerce'il endal ei ole „kehtib
-	 * alates” välja, nii et algusaega hoiab siin plugin.
+	 * alates” välja, nii et algusaega hoiab siin plugin. Koodi aeg on vaikimisi
+	 * riba aeg; kampaania võib koodile panna ka oma alguse ja lõpu.
 	 *
 	 * @param bool      $valid  Senine otsus.
 	 * @param WC_Coupon $coupon Kupong.
@@ -943,16 +1061,155 @@ class WKR_Coupon {
 		}
 
 		$campaign = get_post( $campaign_id );
-		if ( ! $campaign || WKR_CPT !== $campaign->post_type ) {
-			// Kampaania on kustutatud — ei hakka poe tööd segama.
+		if ( ! $campaign || WKR_CPT !== $campaign->post_type || 'trash' === $campaign->post_status ) {
+			// Kampaania on kustutatud või prügikastis — ei hakka poe tööd segama.
 			return $valid;
 		}
 
-		return 'live' === wkr_status( $campaign_id );
+		return 'live' === wkr_code_status( $campaign_id );
 	}
 
 	/**
-	 * Kampaania prügikasti — hallatav kupong läheb mustandiks.
+	 * Annab kampaania hallatava kupongi WooCommerce'ile tagasi.
+	 *
+	 * Kupongi ennast ei muudeta: väärtus, piirangud ja aegumiskuupäev jäävad
+	 * nii, nagu nad on. Kaob ainult side kampaaniaga, nii et plugin koodi
+	 * kehtivust enam ei piira ega kupongi üle ei kirjuta.
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 * @return int Vabastatud kupongi ID või 0, kui kampaania midagi ei hallanud.
+	 */
+	public static function release( $campaign_id ) {
+		$campaign_id = (int) $campaign_id;
+		$coupon_id   = self::owned_id( $campaign_id );
+
+		// Viide võib olla kaduma läinud, kuigi kupongi märge näitab veel siia.
+		if ( ! $coupon_id && self::woo_active() ) {
+			$code     = self::format_code( wkr_get( $campaign_id, 'coupon' ) );
+			$existing = '' !== $code ? (int) wc_get_coupon_id_by_code( $code ) : 0;
+
+			if ( $existing && (int) get_post_meta( $existing, self::OWNER_META, true ) === $campaign_id ) {
+				$coupon_id = $existing;
+			}
+		}
+
+		if ( ! $coupon_id ) {
+			return 0;
+		}
+
+		delete_post_meta( $coupon_id, self::OWNER_META );
+		delete_post_meta( $campaign_id, '_wkr_coupon_id' );
+
+		return (int) $coupon_id;
+	}
+
+	/**
+	 * Selgitus pärast tagasiandmist: mis seisus kupong nüüd on.
+	 *
+	 * @param int $coupon_id Kupongi ID.
+	 * @return string
+	 */
+	public static function released_text( $coupon_id ) {
+		return sprintf(
+			/* translators: 1: coupon code, 2: what the coupon does now */
+			__( 'Kupong „%1$s” on tagasi WooCommerce’i hallata. Plugin seda enam ei muuda ega piira koodi kehtivust. %2$s', 'wonom-kampaaniariba' ),
+			get_the_title( $coupon_id ),
+			self::free_state_text( $coupon_id )
+		);
+	}
+
+	/**
+	 * Kuidas kupong ilma kampaaniata käitub: kas ja kui kaua kood kehtib.
+	 *
+	 * @param int $coupon_id Kupongi ID.
+	 * @return string
+	 */
+	public static function free_state_text( $coupon_id ) {
+		if ( 'publish' !== get_post_status( $coupon_id ) ) {
+			return __( 'Kupong on praegu mustand, nii et kood ei kehti enne, kui kupongi WooCommerce’is avaldad.', 'wonom-kampaaniariba' );
+		}
+
+		$coupon  = new WC_Coupon( $coupon_id );
+		$expires = $coupon->get_date_expires();
+
+		if ( ! $expires ) {
+			return __( 'Kood kehtib nüüd kohe ja aegumiskuupäeva sellel ei ole.', 'wonom-kampaaniariba' );
+		}
+
+		$ts   = (int) $expires->getTimestamp();
+		$when = wkr_pretty( wkr_ts_to_local( $ts ) );
+
+		if ( $ts <= time() ) {
+			return sprintf(
+				/* translators: %s: expiry time */
+				__( 'Kupongi aegumiskuupäev (%s) on möödas, nii et kood praegu ei kehti. Kehtima panemiseks muuda aegumiskuupäeva WooCommerce’is.', 'wonom-kampaaniariba' ),
+				$when
+			);
+		}
+
+		return sprintf(
+			/* translators: %s: expiry time */
+			__( 'Kood kehtib nüüd kohe ja kuni aegumiseni %s.', 'wonom-kampaaniariba' ),
+			$when
+		);
+	}
+
+	/**
+	 * Märkus koodi oma kehtivusaja kohta pärast salvestust.
+	 *
+	 * @param int $campaign_id Kampaania ID.
+	 * @return array{message:string,level:string}|array{} Tühi, kui kood käib riba järgi.
+	 */
+	public static function window_note( $campaign_id ) {
+		$window = wkr_code_window( $campaign_id );
+
+		if ( ! $window['custom'] ) {
+			return array();
+		}
+
+		if ( ! $window['start'] || ! $window['end'] || $window['end'] <= $window['start'] ) {
+			return array(
+				'level'   => 'warning',
+				'message' => __( 'NB! Koodi kehtivusaeg on vigane: lõpp ei ole algusest hiljem. Kood ei hakka kehtima enne, kui ajad on parandatud.', 'wonom-kampaaniariba' ),
+			);
+		}
+
+		$bar_start = (int) get_post_meta( $campaign_id, '_wkr_start_utc', true );
+		$bar_end   = (int) get_post_meta( $campaign_id, '_wkr_end_utc', true );
+		$code_when = wkr_pretty( $window['start_local'] ) . ' – ' . wkr_pretty( $window['end_local'] );
+		$bar_when  = wkr_pretty( wkr_get( $campaign_id, 'start_local' ) ) . ' – ' . wkr_pretty( wkr_get( $campaign_id, 'end_local' ) );
+
+		if ( $bar_start && $bar_end && ( $window['start'] > $bar_start || $window['end'] < $bar_end ) ) {
+			return array(
+				'level'   => 'warning',
+				'message' => sprintf(
+					/* translators: 1: code validity window, 2: bar window */
+					__( 'NB! Riba on eetris ka ajal, mil kood ei kehti: kood kehtib %1$s, riba on eetris %2$s. Sel ajal näeb klient koodi ribal, aga ostukorv seda vastu ei võta.', 'wonom-kampaaniariba' ),
+					$code_when,
+					$bar_when
+				),
+			);
+		}
+
+		return array(
+			'level'   => 'success',
+			'message' => sprintf(
+				/* translators: 1: code validity window, 2: bar window */
+				__( 'Kood kehtib %1$s; riba on eetris %2$s.', 'wonom-kampaaniariba' ),
+				$code_when,
+				$bar_when
+			),
+		);
+	}
+
+	/**
+	 * Kampaania prügikasti — hallatav kupong vabastatakse.
+	 *
+	 * Prügikastis olev kampaania ei tohi koodi kinni hoida: ta ei ole eetris ega
+	 * saa sinna minna, nii et kood jääks muidu märkamatult kehtetuks. Kasutaja
+	 * valib prügikasti saatmisel, kas kood jääb kehtima või läheb mustandiks.
+	 * Kui valikut ei tulnud (teine tee prügikasti), jääb kood kehtima — see ei
+	 * lõhu poes midagi.
 	 *
 	 * @param int $post_id Postituse ID.
 	 */
@@ -964,8 +1221,27 @@ class WKR_Coupon {
 		// Prügikasti visatud kampaania ei pea enam kellegi koodi ootama.
 		self::forget_claim( $post_id );
 
+		// Viide jääb kampaaniale alles, et taastatud kampaania leiaks oma kupongi üles.
 		$coupon_id = self::owned_id( $post_id );
-		if ( $coupon_id ) {
+		if ( ! $coupon_id ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- prügikasti saatmise turvatunnust kontrollib WordPress enne seda haaki.
+		$choice = isset( $_REQUEST['wkr_coupon'] ) ? sanitize_key( wp_unslash( $_REQUEST['wkr_coupon'] ) ) : '';
+		$draft  = 'draft' === $choice;
+
+		delete_post_meta( $coupon_id, self::OWNER_META );
+		update_post_meta(
+			$post_id,
+			self::RELEASED_META,
+			array(
+				'coupon'  => (int) $coupon_id,
+				'drafted' => $draft ? 1 : 0,
+			)
+		);
+
+		if ( $draft ) {
 			wp_update_post(
 				array(
 					'ID'          => $coupon_id,
@@ -973,10 +1249,25 @@ class WKR_Coupon {
 				)
 			);
 		}
+
+		$text = $draft
+			/* translators: 1: campaign title, 2: coupon code */
+			? __( 'Kampaania „%1$s” läks prügikasti. Kupong „%2$s” pandi mustandiks: kood ei kehti enne, kui kupongi WooCommerce’is uuesti avaldad või mõni kampaania selle üle võtab.', 'wonom-kampaaniariba' )
+			/* translators: 1: campaign title, 2: coupon code, 3: what the coupon does now */
+			: __( 'Kampaania „%1$s” läks prügikasti. Kupong „%2$s” on tagasi WooCommerce’i hallata ja kampaania seda enam ei piira. %3$s', 'wonom-kampaaniariba' );
+
+		self::add_notice(
+			$draft ? 'warning' : 'success',
+			sprintf( $text, get_the_title( $post_id ), get_the_title( $coupon_id ), $draft ? '' : self::free_state_text( $coupon_id ) )
+		);
 	}
 
 	/**
-	 * Prügikastist tagasi — kupong avaldatakse uuesti.
+	 * Prügikastist tagasi.
+	 *
+	 * Taastatud kampaania on mustand, nii et kupongi ta kohe tagasi ei võta —
+	 * muidu lakkaks vahepeal vabalt töötanud kood kehtimast. Kupong tuleb tagasi
+	 * siis, kui kampaania uuesti salvestatakse (vt sync()).
 	 *
 	 * @param int $post_id Postituse ID.
 	 */
@@ -985,6 +1276,23 @@ class WKR_Coupon {
 			return;
 		}
 
+		$released = get_post_meta( $post_id, self::RELEASED_META, true );
+
+		if ( is_array( $released ) && ! empty( $released['coupon'] ) && 'shop_coupon' === get_post_type( (int) $released['coupon'] ) ) {
+			self::add_notice(
+				'warning',
+				sprintf(
+					/* translators: 1: campaign title, 2: coupon code */
+					__( 'Kampaania „%1$s” on taastatud mustandina. Kupongi „%2$s” ta veel ei halda — see tuleb kampaania alla tagasi siis, kui kampaania üle vaatad ja uuesti avaldad.', 'wonom-kampaaniariba' ),
+					get_the_title( $post_id ),
+					get_the_title( (int) $released['coupon'] )
+				)
+			);
+
+			return;
+		}
+
+		// Vanema versiooniga prügikasti läinud kampaania: side on alles ja kupong mustand.
 		$coupon_id = self::owned_id( $post_id );
 		if ( $coupon_id ) {
 			wp_update_post(
@@ -994,6 +1302,157 @@ class WKR_Coupon {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Kampaania kustutatakse jäädavalt — kupongile ei jää rippuvat märget.
+	 *
+	 * @param int $post_id Postituse ID.
+	 */
+	public static function on_delete( $post_id ) {
+		if ( WKR_CPT !== get_post_type( $post_id ) ) {
+			return;
+		}
+
+		self::forget_claim( $post_id );
+
+		$coupon_id = (int) get_post_meta( $post_id, '_wkr_coupon_id', true );
+
+		if ( $coupon_id && (int) get_post_meta( $coupon_id, self::OWNER_META, true ) === (int) $post_id ) {
+			delete_post_meta( $coupon_id, self::OWNER_META );
+		}
+	}
+
+	/**
+	 * Teade WooCommerce'i kupongi muutmise lehel: seda kupongi haldab kampaania.
+	 *
+	 * Ilma selleta ei ütle WooCommerce'i poolel miski, et koodi kehtivuse
+	 * otsustab kampaania ja siinsed seaded kirjutatakse üle.
+	 */
+	public static function coupon_screen_notice() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || 'post' !== $screen->base || 'shop_coupon' !== $screen->post_type ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- ainult teate näitamine.
+		$coupon_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		$owner     = $coupon_id ? self::owner_campaign( $coupon_id ) : 0;
+
+		if ( ! $owner ) {
+			return;
+		}
+
+		$window = wkr_code_window( $owner );
+		$status = wkr_code_status( $owner );
+		$states = array(
+			'live'     => __( 'Kood kehtib praegu.', 'wonom-kampaaniariba' ),
+			'upcoming' => __( 'Kood ei kehti veel.', 'wonom-kampaaniariba' ),
+			'ended'    => __( 'Aeg on läbi, kood enam ei kehti.', 'wonom-kampaaniariba' ),
+			'off'      => __( 'Kampaania on mustand või välja lülitatud, nii et kood praegu ei kehti.', 'wonom-kampaaniariba' ),
+		);
+
+		$release_url = wp_nonce_url(
+			admin_url( 'admin-post.php?action=wkr_release_coupon&coupon=' . $coupon_id ),
+			'wkr_release_' . $coupon_id
+		);
+		?>
+		<div class="notice notice-info">
+			<p>
+				<strong>
+					<?php
+					printf(
+						/* translators: %s: campaign title */
+						esc_html__( 'Seda kupongi haldab Wonom kampaania „%s”.', 'wonom-kampaaniariba' ),
+						esc_html( get_the_title( $owner ) )
+					);
+					?>
+				</strong>
+				<?php
+				printf(
+					/* translators: 1: code validity start, 2: code validity end */
+					esc_html__( 'Kood kehtib ainult ajavahemikus %1$s – %2$s, olenemata siinsetest seadetest.', 'wonom-kampaaniariba' ),
+					esc_html( wkr_pretty( $window['start_local'] ) ),
+					esc_html( wkr_pretty( $window['end_local'] ) )
+				);
+				echo ' ' . esc_html( $states[ $status ] ) . ' ';
+				esc_html_e( 'Kampaania salvestamine kirjutab üle kupongi väärtuse, piirangud ja aegumiskuupäeva.', 'wonom-kampaaniariba' );
+				?>
+			</p>
+			<p>
+				<?php if ( current_user_can( 'edit_post', $owner ) ) : ?>
+					<a class="button" href="<?php echo esc_url( (string) get_edit_post_link( $owner, 'raw' ) ); ?>">
+						<?php esc_html_e( 'Ava kampaania', 'wonom-kampaaniariba' ); ?>
+					</a>
+					<a class="button" href="<?php echo esc_url( $release_url ); ?>">
+						<?php esc_html_e( 'Anna kupong WooCommerce’ile tagasi', 'wonom-kampaaniariba' ); ?>
+					</a>
+					<span class="description">
+						<?php esc_html_e( 'Tagasiandmine ei muuda kupongi; kood hakkab kehtima ainult siinsete seadete järgi ja kampaania näitab seda ribal edasi.', 'wonom-kampaaniariba' ); ?>
+					</span>
+				<?php endif; ?>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Nupp „Anna kupong WooCommerce'ile tagasi” kupongi lehel.
+	 */
+	public static function handle_release() {
+		$coupon_id = isset( $_GET['coupon'] ) ? absint( $_GET['coupon'] ) : 0;
+
+		if ( ! $coupon_id || 'shop_coupon' !== get_post_type( $coupon_id ) ) {
+			wp_die( esc_html__( 'Kupongi ei leitud.', 'wonom-kampaaniariba' ) );
+		}
+
+		check_admin_referer( 'wkr_release_' . $coupon_id );
+
+		$owner = (int) get_post_meta( $coupon_id, self::OWNER_META, true );
+
+		if ( ! current_user_can( 'edit_post', $coupon_id ) || ( $owner && WKR_CPT === get_post_type( $owner ) && ! current_user_can( 'edit_post', $owner ) ) ) {
+			wp_die( esc_html__( 'Puuduvad õigused.', 'wonom-kampaaniariba' ) );
+		}
+
+		if ( $owner ) {
+			delete_post_meta( $coupon_id, self::OWNER_META );
+
+			if ( WKR_CPT === get_post_type( $owner ) ) {
+				delete_post_meta( $owner, '_wkr_coupon_id' );
+				delete_post_meta( $owner, self::RELEASED_META );
+
+				// Muidu võtaks kampaania kupongi järgmisel salvestusel uuesti enda alla.
+				update_post_meta( $owner, '_wkr_wc_mode', 'none' );
+			}
+
+			self::add_notice( 'success', self::released_text( $coupon_id ) );
+		}
+
+		wp_safe_redirect( (string) get_edit_post_link( $coupon_id, 'raw' ) );
+		exit;
+	}
+
+	/**
+	 * Lisab teate juba ootel olevale teatele (mitu kampaaniat korraga prügikasti).
+	 *
+	 * @param string $status  success|warning|error.
+	 * @param string $message Teade.
+	 */
+	public static function add_notice( $status, $message ) {
+		$message = trim( (string) $message );
+		$before  = get_transient( 'wkr_notice_' . get_current_user_id() );
+
+		if ( is_array( $before ) && ! empty( $before['message'] ) ) {
+			$message = $before['message'] . ' ' . $message;
+
+			// Hoiatus ei tohi edukateate varju jääda.
+			if ( 'success' !== $before['status'] ) {
+				$status = $before['status'];
+			}
+		}
+
+		self::remember_notice( $status, $message );
 	}
 
 	/**

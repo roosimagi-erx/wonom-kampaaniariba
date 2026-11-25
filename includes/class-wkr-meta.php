@@ -55,6 +55,30 @@ class WKR_Meta {
 			wp_enqueue_script( 'updates' );
 		}
 
+		// Prügikasti saatmisel küsitakse, mis saab kampaania hallatavast kupongist.
+		if ( ( $is_editor || $is_list ) && WKR_Coupon::woo_active() ) {
+			$owned = $is_editor && get_the_ID() && WKR_Coupon::owned_id( get_the_ID() );
+
+			wp_enqueue_script( 'wkr-admin-trash', WKR_URL . 'assets/admin-trash.js', array(), WKR_VERSION, true );
+			wp_localize_script(
+				'wkr-admin-trash',
+				'WKR_TRASH',
+				array(
+					'owned' => $owned ? (string) wkr_get( get_the_ID(), 'coupon' ) : '',
+					'i18n'  => array(
+						'title'     => __( 'Kampaania haldab sooduskoodi', 'wonom-kampaaniariba' ),
+						/* translators: %s: coupon code(s) */
+						'text'      => __( 'Prügikasti minev kampaania haldab WooCommerce’i kupongi %s. Mis peab koodiga juhtuma?', 'wonom-kampaaniariba' ),
+						'keep'      => __( 'Kood jääb kehtima', 'wonom-kampaaniariba' ),
+						'keepHint'  => __( 'Kupong läheb tagasi WooCommerce’i hallata ja kehtib tema enda seadete järgi; aegumiskuupäev jääb alles.', 'wonom-kampaaniariba' ),
+						'draft'     => __( 'Kood ei kehti enam', 'wonom-kampaaniariba' ),
+						'draftHint' => __( 'Kupong pannakse mustandiks, kuni keegi selle uuesti avaldab.', 'wonom-kampaaniariba' ),
+						'cancel'    => __( 'Katkesta', 'wonom-kampaaniariba' ),
+					),
+				)
+			);
+		}
+
 		if ( ! $is_editor && ! $is_settings ) {
 			return;
 		}
@@ -310,6 +334,9 @@ class WKR_Meta {
 					<?php esc_html_e( 'Loo ja hoia WooCommerce kupong siit', 'wonom-kampaaniariba' ); ?>
 				</option>
 			</select>
+			<span class="wkr-hint">
+				<?php esc_html_e( 'Kui plugin haldab kupongi ja valid siin „Ainult näitan koodi ribal”, annab salvestamine kupongi WooCommerce’ile tagasi: kood kehtib siis WooCommerce’i enda seadete järgi ja plugin seda enam ei muuda ega piira.', 'wonom-kampaaniariba' ); ?>
+			</span>
 		</p>
 
 		<div class="wkr-woo-status">
@@ -336,6 +363,28 @@ class WKR_Meta {
 
 		<div class="wkr-woo-fields" <?php echo 'manage' === $mode ? '' : 'hidden'; ?>>
 			<div class="wkr-grid wkr-grid--2">
+				<p class="wkr-field">
+					<label for="wkr_code_start"><?php esc_html_e( 'Kood kehtib alates', 'wonom-kampaaniariba' ); ?></label>
+					<span class="wkr-dt">
+						<input type="text" id="wkr_code_start" name="wkr[code_start_local]" class="wkr-date"
+							value="<?php echo esc_attr( wkr_pretty( wkr_get( $post->ID, 'code_start_local' ) ) ); ?>" placeholder="pp.kk.aaaa hh:mm" autocomplete="off">
+					</span>
+					<span class="wkr-hint"><?php esc_html_e( 'Tühi = riba algusest.', 'wonom-kampaaniariba' ); ?></span>
+				</p>
+				<p class="wkr-field">
+					<label for="wkr_code_end"><?php esc_html_e( 'Kood kehtib kuni', 'wonom-kampaaniariba' ); ?></label>
+					<span class="wkr-dt">
+						<input type="text" id="wkr_code_end" name="wkr[code_end_local]" class="wkr-date"
+							value="<?php echo esc_attr( wkr_pretty( wkr_get( $post->ID, 'code_end_local' ) ) ); ?>" placeholder="pp.kk.aaaa hh:mm" autocomplete="off">
+					</span>
+					<span class="wkr-hint"><?php esc_html_e( 'Tühi = riba lõpuni. Lõpuhetk ise enam sisse ei kuulu.', 'wonom-kampaaniariba' ); ?></span>
+				</p>
+				<p class="wkr-field is-wide">
+					<span class="wkr-hint">
+						<?php esc_html_e( 'Täida need ainult siis, kui kood peab kehtima ribast erineval ajal — näiteks uudiskirja saajatele juba eelmisel õhtul, kuigi riba ilmub lehele alles südaööl. Kellaajad on kampaania ajavööndis. Riba näitamist need väljad ei muuda.', 'wonom-kampaaniariba' ); ?>
+					</span>
+				</p>
+
 				<p class="wkr-field">
 					<label for="wkr_wc_type"><?php esc_html_e( 'Soodustuse liik', 'wonom-kampaaniariba' ); ?></label>
 					<select id="wkr_wc_type" name="wkr[wc_type]">
@@ -474,7 +523,7 @@ class WKR_Meta {
 			</div>
 
 			<p class="wkr-hint">
-				<?php esc_html_e( 'Kupongi aegumiskuupäev tuleb kampaania lõpuajast — seda eraldi sisestada ei ole vaja. Enne kampaania algust kood ei kehti, isegi kui keegi selle ära arvab: WooCommerce’il endal ei ole „kehtib alates” välja, seda hoiab plugin.', 'wonom-kampaaniariba' ); ?>
+				<?php esc_html_e( 'Kupongi aegumiskuupäev tuleb koodi lõpuajast (tühja välja korral riba lõpust) — WooCommerce’is seda eraldi sisestada ei ole vaja. Enne koodi algust kood ei kehti, isegi kui keegi selle ära arvab: WooCommerce’il endal ei ole „kehtib alates” välja, seda hoiab plugin.', 'wonom-kampaaniariba' ); ?>
 			</p>
 		</div>
 		<?php
@@ -821,6 +870,13 @@ class WKR_Meta {
 
 		update_post_meta( $post_id, '_wkr_start_utc', wkr_local_to_ts( $start_local, $tz ) );
 		update_post_meta( $post_id, '_wkr_end_utc', wkr_local_to_ts( $end_local, $tz ) );
+
+		// Koodi oma kehtivusaeg. Tühi väli = 0 = kood käib riba järgi.
+		$code_start = wkr_parse_display( isset( $raw['code_start_local'] ) ? $raw['code_start_local'] : '' );
+		$code_end   = wkr_parse_display( isset( $raw['code_end_local'] ) ? $raw['code_end_local'] : '' );
+
+		update_post_meta( $post_id, '_wkr_code_start_utc', wkr_local_to_ts( $code_start, $tz ) );
+		update_post_meta( $post_id, '_wkr_code_end_utc', wkr_local_to_ts( $code_end, $tz ) );
 
 		// Keelepõhised tekstid.
 		$texts = isset( $_POST['wkr_t'] ) ? wp_unslash( $_POST['wkr_t'] ) : array();

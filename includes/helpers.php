@@ -243,6 +243,16 @@ function wkr_meta_schema() {
 			'default' => 0,
 		),
 
+		// Koodi oma kehtivusaeg. Tühi = sama mis riba algus ja lõpp.
+		'code_start_local' => array(
+			'type'    => 'datetime',
+			'default' => '',
+		),
+		'code_end_local'   => array(
+			'type'    => 'datetime',
+			'default' => '',
+		),
+
 		// Toote- ja kategooriapiirangud.
 		'wc_manage_items' => array(
 			'type'    => 'bool',
@@ -499,6 +509,60 @@ function wkr_status( $post_id, $now = 0 ) {
 	// Lõpuhetk ise on juba „lõppenud”: kui üks kampaania lõpeb ja teine algab
 	// samal sekundil, ei tohi kumbki hetkekski koos eetris olla.
 	if ( $now >= $end ) {
+		return 'ended';
+	}
+
+	return 'live';
+}
+
+/**
+ * Hallatava sooduskoodi kehtivusaeg.
+ *
+ * Kood kehtib vaikimisi sama kaua kui riba. Kui kampaanial on koodile oma
+ * algus või lõpp, siis loeb see: nii saab koodi käima panna näiteks eelmisel
+ * õhtul, enne kui riba lehele ilmub. Lõpuhetk ise enam sisse ei kuulu.
+ *
+ * @param int $post_id Kampaania ID.
+ * @return array{start:int,end:int,start_local:string,end_local:string,custom:bool}
+ */
+function wkr_code_window( $post_id ) {
+	$start = (int) get_post_meta( $post_id, '_wkr_code_start_utc', true );
+	$end   = (int) get_post_meta( $post_id, '_wkr_code_end_utc', true );
+
+	$out = array(
+		'start'       => $start ? $start : (int) get_post_meta( $post_id, '_wkr_start_utc', true ),
+		'end'         => $end ? $end : (int) get_post_meta( $post_id, '_wkr_end_utc', true ),
+		'start_local' => (string) wkr_get( $post_id, $start ? 'code_start_local' : 'start_local' ),
+		'end_local'   => (string) wkr_get( $post_id, $end ? 'code_end_local' : 'end_local' ),
+		'custom'      => $start || $end,
+	);
+
+	return $out;
+}
+
+/**
+ * Sooduskoodi olek: sama mis wkr_status(), aga koodi kehtivusaja järgi.
+ *
+ * @param int $post_id Kampaania ID.
+ * @param int $now     Ajatempel, vaikimisi praegu.
+ * @return string live | upcoming | ended | off
+ */
+function wkr_code_status( $post_id, $now = 0 ) {
+	$now = $now ? (int) $now : time();
+
+	if ( ! wkr_get( $post_id, 'enabled' ) || 'publish' !== get_post_status( $post_id ) ) {
+		return 'off';
+	}
+
+	$window = wkr_code_window( $post_id );
+
+	if ( ! $window['start'] || ! $window['end'] || $window['end'] <= $window['start'] ) {
+		return 'off';
+	}
+	if ( $now < $window['start'] ) {
+		return 'upcoming';
+	}
+	if ( $now >= $window['end'] ) {
 		return 'ended';
 	}
 
