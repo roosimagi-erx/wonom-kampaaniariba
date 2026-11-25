@@ -1,6 +1,6 @@
-# Koodikontroll K1–K17 — versioon 1.22.0
+# Koodikontroll K1–K17 — versioon 1.22.1
 
-Kuupäev: 25.11.2026. Kontrollitud kood: `wonom-kampaaniariba` 1.22.0 (riba andmefailist; koodil oma kehtivusaeg).
+Kuupäev: 25.11.2026. Kontrollitud kood: `wonom-kampaaniariba` 1.22.1 (riba andmefailist; koodil oma kehtivusaeg).
 
 | # | Tulemus | Selgitus |
 |---|---|---|

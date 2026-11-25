@@ -1,5 +1,16 @@
 # Muudatuste logi
 
+## 1.22.1 - 2026-11-25
+
+### Prügikastist taastatud kampaania saab kupongi kohe tagasi
+
+Versiooni 1.22.0 test näitas, et kampaania võib prügikastist taastuda kohe avaldatuna, mitte mustandina. Sellisel juhul oli kampaania jälle eetris, aga kupongi ta enne järgmist salvestust ei hallanud, nii et koodi kehtivusaega ei hoidnud vahepeal keegi.
+
+- **Avaldatuna taastatud kampaania** võtab oma endise kupongi kohe tagasi; mustandiks pandud kupong avaldatakse uuesti. „Võta tagasi” pärast prügikasti saatmist taastab seega täpselt endise seisu.
+- **Mustandina taastatud kampaania** käitub nagu 1.22.0-s: töötavat koodi ta ära ei võta ja kupong tuleb tagasi siis, kui kampaania uuesti salvestatakse.
+- Teade pärast taastamist ütleb, kumb neist juhtus.
+- Kampaania vormis on kupongi olek õige ka siis, kui kupong ootab mustandina tagasivõtmist.
+
 ## 1.22.0 - 2026-11-25
 
 ### Sooduskoodil võib olla ribast erinev kehtivusaeg

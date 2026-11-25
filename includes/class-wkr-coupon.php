@@ -543,6 +543,18 @@ class WKR_Coupon {
 		$existing = (int) wc_get_coupon_id_by_code( $code );
 
 		if ( ! $existing ) {
+			// Prügikasti minnes mustandiks pandud kupong: salvestus võtab selle tagasi.
+			$parked = self::released_draft( $campaign_id, $code );
+
+			if ( $parked ) {
+				$out['state']    = 'returning';
+				$out['pill']     = 'upcoming';
+				$out['label']    = __( 'Kupong on mustand — see kampaania võtab selle salvestamisel uuesti enda hallata ja avaldab', 'wonom-kampaaniariba' );
+				$out['edit_url'] = (string) get_edit_post_link( $parked, 'raw' );
+
+				return $out;
+			}
+
 			$out['state'] = 'none';
 			$out['label'] = __( 'Sellist kupongi WooCommerce’is veel ei ole — plugin loob selle salvestamisel', 'wonom-kampaaniariba' );
 			return $out;
@@ -782,19 +794,8 @@ class WKR_Coupon {
 		 * üles ei leia (ta otsib ainult avaldatuid). Ilma selleta tekiks
 		 * taastatud kampaania salvestamisel sama koodiga teine kupong.
 		 */
-		$released = get_post_meta( $campaign_id, self::RELEASED_META, true );
-
-		if ( ! $owned_id && ! $existing_id && is_array( $released ) && ! empty( $released['drafted'] ) ) {
-			$candidate = (int) $released['coupon'];
-
-			if (
-				'shop_coupon' === get_post_type( $candidate )
-				&& 'draft' === get_post_status( $candidate )
-				&& ! get_post_meta( $candidate, self::OWNER_META, true )
-				&& self::format_code( get_the_title( $candidate ) ) === $code
-			) {
-				$owned_id = $candidate;
-			}
+		if ( ! $owned_id && ! $existing_id ) {
+			$owned_id = self::released_draft( $campaign_id, $code );
 		}
 
 		// Sama koodiga kupong on juba olemas ja see pole meie oma.
@@ -1104,6 +1105,35 @@ class WKR_Coupon {
 	}
 
 	/**
+	 * Kupong, mille see kampaania prügikasti minnes mustandiks pani ja mis ootab
+	 * endiselt samas seisus sama koodiga.
+	 *
+	 * @param int    $campaign_id Kampaania ID.
+	 * @param string $code        Sooduskood WooCommerce'i kujul.
+	 * @return int Kupongi ID või 0.
+	 */
+	private static function released_draft( $campaign_id, $code ) {
+		$released = get_post_meta( $campaign_id, self::RELEASED_META, true );
+
+		if ( ! is_array( $released ) || empty( $released['drafted'] ) || empty( $released['coupon'] ) ) {
+			return 0;
+		}
+
+		$candidate = (int) $released['coupon'];
+
+		if (
+			'shop_coupon' === get_post_type( $candidate )
+			&& 'draft' === get_post_status( $candidate )
+			&& ! get_post_meta( $candidate, self::OWNER_META, true )
+			&& self::format_code( get_the_title( $candidate ) ) === $code
+		) {
+			return $candidate;
+		}
+
+		return 0;
+	}
+
+	/**
 	 * Selgitus pärast tagasiandmist: mis seisus kupong nüüd on.
 	 *
 	 * @param int $coupon_id Kupongi ID.
@@ -1265,9 +1295,10 @@ class WKR_Coupon {
 	/**
 	 * Prügikastist tagasi.
 	 *
-	 * Taastatud kampaania on mustand, nii et kupongi ta kohe tagasi ei võta —
-	 * muidu lakkaks vahepeal vabalt töötanud kood kehtimast. Kupong tuleb tagasi
-	 * siis, kui kampaania uuesti salvestatakse (vt sync()).
+	 * Mustandina taastatud kampaania kupongi kohe tagasi ei võta — muidu lakkaks
+	 * vahepeal vabalt töötanud kood kehtimast. Kupong tuleb tagasi siis, kui
+	 * kampaania uuesti salvestatakse (vt sync()). Avaldatuna taastatud kampaania
+	 * saab kupongi kohe tagasi.
 	 *
 	 * @param int $post_id Postituse ID.
 	 */
@@ -1279,6 +1310,37 @@ class WKR_Coupon {
 		$released = get_post_meta( $post_id, self::RELEASED_META, true );
 
 		if ( is_array( $released ) && ! empty( $released['coupon'] ) && 'shop_coupon' === get_post_type( (int) $released['coupon'] ) ) {
+			/*
+			 * Mõnel saidil taastub postitus prügikastist kohe avaldatuna (mitte
+			 * mustandina). Siis on kampaania täpselt samas seisus nagu enne
+			 * prügikasti ja peab kohe ka oma kupongi tagasi saama — muidu oleks
+			 * ta eetris, aga koodi kehtivusaega ei hoiaks keegi.
+			 */
+			if ( 'publish' === get_post_status( $post_id ) && self::woo_active() && 'manage' === wkr_get( $post_id, 'wc_mode' ) ) {
+				$coupon_title = get_the_title( (int) $released['coupon'] );
+				$result       = self::sync( $post_id );
+
+				self::schedule_claim( $post_id );
+
+				if ( 'ok' === $result['status'] ) {
+					self::add_notice(
+						'success',
+						trim(
+							sprintf(
+								/* translators: 1: campaign title, 2: coupon code */
+								__( 'Kampaania „%1$s” on taastatud ja haldab jälle kupongi „%2$s”.', 'wonom-kampaaniariba' ),
+								get_the_title( $post_id ),
+								$coupon_title
+							) . ' ' . $result['message']
+						)
+					);
+				} elseif ( ! empty( $result['message'] ) ) {
+					self::add_notice( 'warning', $result['message'] );
+				}
+
+				return;
+			}
+
 			self::add_notice(
 				'warning',
 				sprintf(
